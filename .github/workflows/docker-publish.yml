@@ -11,7 +11,7 @@ on:
   pull_request:
 
 env:
-  DOCKER_IMAGE: frankescobar/allure-docker-service
+  DOCKER_IMAGE: hemanth-tummala/allure-docker-service
   ALLURE_RELEASE: 2.27.0
   QEMU_VERSION: v4.0.0
   DOCKER_CLI_EXPERIMENTAL: enabled
@@ -23,20 +23,20 @@ jobs:
       matrix:
         ARCH: [amd64, arm32v7, arm64v8]
         include:
-        - ARCH: amd64
-          DOCKER_FILE: Dockerfile.bionic
-          JDK: adoptopenjdk:11-jre-openj9-bionic
-          QEMU_ARCH: x86_64
+          - ARCH: amd64
+            DOCKER_FILE: Dockerfile.bionic
+            JDK: adoptopenjdk:11-jre-openj9-bionic
+            QEMU_ARCH: x86_64
 
-        - ARCH: arm32v7
-          DOCKER_FILE: Dockerfile.bionic
-          JDK: adoptopenjdk:11-jdk-hotspot-bionic
-          QEMU_ARCH: arm
+          - ARCH: arm32v7
+            DOCKER_FILE: Dockerfile.bionic
+            JDK: adoptopenjdk:11-jdk-hotspot-bionic
+            QEMU_ARCH: arm
 
-        - ARCH: arm64v8
-          DOCKER_FILE: Dockerfile.bionic
-          JDK: adoptopenjdk:11-jre-hotspot-bionic
-          QEMU_ARCH: aarch64
+          - ARCH: arm64v8
+            DOCKER_FILE: Dockerfile.bionic
+            JDK: adoptopenjdk:11-jre-hotspot-bionic
+            QEMU_ARCH: aarch64
 
     if: github.event_name == 'push'
     outputs:
@@ -110,8 +110,8 @@ jobs:
       - name: DockerHub Login
         if: success() && startsWith(github.ref, 'refs/tags/v')
         env:
-          DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
-          DOCKER_HUB_PASS: ${{ secrets.DOCKER_HUB_PASS }}
+          DOCKER_HUB_USER: "tummalahemanth0"
+          DOCKER_HUB_PASS: "aaaa@123A"
         run: |
           echo "${DOCKER_HUB_PASS}" | docker login -u "${DOCKER_HUB_USER}" --password-stdin
 
@@ -133,8 +133,8 @@ jobs:
       - name: DockerHub Login
         if: success() && startsWith(github.ref, 'refs/tags/v')
         env:
-          DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
-          DOCKER_HUB_PASS: ${{ secrets.DOCKER_HUB_PASS }}
+          DOCKER_HUB_USER: "tummalahemanth0"
+          DOCKER_HUB_PASS: "aaaa@123A"
         run: |
           echo "${DOCKER_HUB_PASS}" | docker login -u "${DOCKER_HUB_USER}" --password-stdin
 
