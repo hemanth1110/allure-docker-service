@@ -139,7 +139,7 @@
                "Action"
             ],
             "summary":"Send results files (from version 2.12.1) with optional custom directory support",
-            "description":"Send results files to allure. Optionally specify custom_results_dir and lens_version to route results to a custom path format: /app/DMaas/allure-results/{platform}/{product}-{major.minor}.x-results/{full_version}. The platform and product info are extracted from project_id. Supported formats: windows-ld-v-2-4-x (lens desktop), macos-ld-v-2-2-x (lens desktop), windows-lr-v-1-14-x (lens room).",
+            "description":"Send results files to allure. Optionally specify custom_results_dir and lens_version to route results to a custom path format: /app/DMaas/allure-results/{platform}/{product}-{major.minor}.x-results/{full_version}. The platform and product info are extracted from project_id (e.g., windows-ld-v-2-4-x, windows-lr-v-1-14-x).",
             "consumes":[
                "application/json",
                "multipart/form-data"
@@ -151,7 +151,7 @@
                   "schema":{
                      "type":"string"
                   },
-                  "description":"Project identifier. For custom paths, use format: {platform}-{product}-v-{major}-{minor}-x. Examples: windows-ld-v-2-4-x (lens desktop), macos-ld-v-2-2-x (lens desktop), windows-lr-v-1-14-x (lens room)"
+                  "description":"Project identifier. For custom paths, use format: {platform}-{product}-v-{major}-{minor}-x (e.g., windows-ld-v-2-4-x, macos-lr-v-1-14-x)"
                },
                {
                   "in":"query",

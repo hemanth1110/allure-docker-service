@@ -895,25 +895,33 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
             ):
             raise Exception("Header 'Content-Type' should start with 'application/json' or 'multipart/form-data'") #pylint: disable=line-too-long
 
+        # Extract new optional parameters
         custom_results_dir = request.args.get('custom_results_dir', '').lower() == 'true'
         lens_version = request.args.get('lens_version')
-        project_id = resolve_project(request.args.get('project_id'))
-
+        
+        # Validate parameter combination
         if custom_results_dir and not lens_version:
-            raise Exception('lens_version is required when custom_results_dir is true')
+            body = {
+                'meta_data': {
+                    'message': 'lens_version is required when custom_results_dir is true'
+                }
+            }
+            resp = jsonify(body)
+            resp.status_code = 400
+            return resp
         
         if not custom_results_dir and lens_version:
-            raise Exception('custom_results_dir must be true when lens_version is provided')
-    
-        validated_results = []
-        processed_files = []
-        failed_files = []
-        
-        if custom_results_dir and lens_version:
-            custom_path = generate_results_path(custom_results_dir, lens_version, project_id)
-            os.makedirs(custom_path, exist_ok=True)
-            results_project = custom_path
-        else:
+            body = {
+                'meta_data': {
+                    'message': 'custom_results_dir must be true when lens_version is provided'
+                }
+            }
+            resp = jsonify(body)
+            resp.status_code = 400
+            return resp
+
+        project_id = resolve_project(request.args.get('project_id'))
+        if not custom_results_dir and not lens_version:
             if is_existent_project(project_id) is False:
                 if request.args.get('force_project_creation') == 'true':
                     project_id = create_project({ "id": project_id })
@@ -926,7 +934,29 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
                     resp = jsonify(body)
                     resp.status_code = 404
                     return resp
-                    
+
+        validated_results = []
+        processed_files = []
+        failed_files = []
+        
+        # Determine results path based on custom parameters
+        if custom_results_dir and lens_version:
+            try:
+                custom_path = generate_results_path(custom_results_dir, lens_version, project_id)
+                # Ensure the custom directory exists
+                os.makedirs(custom_path, exist_ok=True)
+                results_project = custom_path
+            except ValueError as ve:
+                body = {
+                    'meta_data': {
+                        'message': str(ve)
+                    }
+                }
+                resp = jsonify(body)
+                resp.status_code = 400
+                return resp
+        else:
+            # Default behavior
             results_project = '{}/results'.format(get_project_path(project_id))
 
         if content_type.startswith('application/json') is True:
@@ -1685,33 +1715,37 @@ def generate_results_path(custom_results_dir, lens_version, project_id):
     project_id formats:
     - windows-ld-v-2-4-x (lens desktop)
     - macos-ld-v-2-2-x (lens desktop)
-    - windows-lr-v-1-14-x (lens room)
+    - windows-lr-v-1-14-x (lens runtime)
     """
-    # Parse project_id to extract platform and version info
-    # Format: {platform}-{product}-v-{major}-{minor}-x
-    project_parts = project_id.split('-')
-
-    if len(project_parts) < 6 or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, got: {project_id}")
-
-    platform = project_parts[0]  # windows or macos
-    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
-    major = project_parts[3]
-    minor = project_parts[4]
-
-    product_mapping = {
-        'ld': 'lens',
-        'lr': 'lensr'
-    }
-
-    if product_code not in product_mapping:
-        raise Exception(f"Unknown product code: {product_code}. Expected 'ld' or 'lr'")
-
-    product_name = product_mapping[product_code]
-    major_minor = f"{major}.{minor}"
-
-    custom_path = f"/app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{lens_version}"
-    return custom_path
+    if custom_results_dir and lens_version and project_id:
+        # Parse project_id to extract platform and version info
+        # Format: {platform}-{product}-v-{major}-{minor}-x
+        project_parts = project_id.split('-')
+        
+        if len(project_parts) < 6 or project_parts[2] != 'v' or project_parts[5] != 'x':
+            raise ValueError(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, got: {project_id}")
+        
+        platform = project_parts[0]  # windows or macos
+        product_code = project_parts[1]  # ld (lens desktop) or lr (lens runtime)
+        major = project_parts[3]
+        minor = project_parts[4]
+        
+        # Map product codes to full names
+        product_mapping = {
+            'ld': 'lens',
+            'lr': 'lensr'
+        }
+        
+        if product_code not in product_mapping:
+            raise ValueError(f"Unknown product code: {product_code}. Expected 'ld' or 'lr'")
+        
+        product_name = product_mapping[product_code]
+        major_minor = f"{major}.{minor}"
+        
+        # Construct the custom path
+        custom_path = f"/app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{lens_version}"
+        return custom_path
+    return None
 
 def resolve_project(project_id_param):
     project_id = 'default'
