@@ -895,24 +895,39 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
             ):
             raise Exception("Header 'Content-Type' should start with 'application/json' or 'multipart/form-data'") #pylint: disable=line-too-long
 
+        custom_results_dir = request.args.get('custom_results_dir', '').lower() == 'true'
+        lens_version = request.args.get('lens_version')
         project_id = resolve_project(request.args.get('project_id'))
-        if is_existent_project(project_id) is False:
-            if request.args.get('force_project_creation') == 'true':
-                project_id = create_project({ "id": project_id })
-            else:
-                body = {
-                    'meta_data': {
-                        'message' : "project_id '{}' not found".format(project_id)
-                    }
-                }
-                resp = jsonify(body)
-                resp.status_code = 404
-                return resp
 
+        if custom_results_dir and not lens_version:
+            raise Exception('lens_version is required when custom_results_dir is true')
+        
+        if not custom_results_dir and lens_version:
+            raise Exception('custom_results_dir must be true when lens_version is provided')
+    
         validated_results = []
         processed_files = []
         failed_files = []
-        results_project = '{}/results'.format(get_project_path(project_id))
+        
+        if custom_results_dir and lens_version:
+            custom_path = generate_results_path(custom_results_dir, lens_version, project_id)
+            os.makedirs(custom_path, exist_ok=True)
+            results_project = custom_path
+        else:
+            if is_existent_project(project_id) is False:
+                if request.args.get('force_project_creation') == 'true':
+                    project_id = create_project({ "id": project_id })
+                else:
+                    body = {
+                        'meta_data': {
+                            'message' : "project_id '{}' not found".format(project_id)
+                        }
+                    }
+                    resp = jsonify(body)
+                    resp.status_code = 404
+                    return resp
+                    
+            results_project = '{}/results'.format(get_project_path(project_id))
 
         if content_type.startswith('application/json') is True:
             json_body = request.get_json()
@@ -1661,6 +1676,42 @@ def get_projects_filtered_by_id(project_id, projects):
 
 def get_project_path(project_id):
     return '{}/{}'.format(PROJECTS_DIRECTORY, project_id)
+
+def generate_results_path(custom_results_dir, lens_version, project_id):
+    """
+    Generate appropriate path format for custom results directory.
+    Example: /app/DMaas/allure-results/windows/lens-2.3.x-results/2.3.0.1234
+    
+    project_id formats:
+    - windows-ld-v-2-4-x (lens desktop)
+    - macos-ld-v-2-2-x (lens desktop)
+    - windows-lr-v-1-14-x (lens room)
+    """
+    # Parse project_id to extract platform and version info
+    # Format: {platform}-{product}-v-{major}-{minor}-x
+    project_parts = project_id.split('-')
+
+    if len(project_parts) < 6 or project_parts[2] != 'v' or project_parts[5] != 'x':
+        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, got: {project_id}")
+
+    platform = project_parts[0]  # windows or macos
+    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
+    major = project_parts[3]
+    minor = project_parts[4]
+
+    product_mapping = {
+        'ld': 'lens',
+        'lr': 'lensr'
+    }
+
+    if product_code not in product_mapping:
+        raise Exception(f"Unknown product code: {product_code}. Expected 'ld' or 'lr'")
+
+    product_name = product_mapping[product_code]
+    major_minor = f"{major}.{minor}"
+
+    custom_path = f"/app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{lens_version}"
+    return custom_path
 
 def resolve_project(project_id_param):
     project_id = 'default'

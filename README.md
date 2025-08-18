@@ -654,6 +654,45 @@ If you use the query parameter `force_project_creation` with value `true`, the p
 
 `POST /send-results?project_id=any-unexistent-project&force_project_creation=true`
 
+##### Custom Results Directory Support
+`Available from Allure Docker Service version 2.15.0+`
+
+The send-results endpoint now supports sending results to custom directory structures, which is particularly useful for organizing test results by product versions and platforms. This feature enables better organization and management of test results across different product variants.
+
+**Usage:**
+To use custom results directory, you must provide both `custom_results_dir=true` and `lens_version` parameters:
+
+```
+POST /send-results?project_id=windows-ld-v-2-4-x&custom_results_dir=true&lens_version=2.4.0.1234
+```
+
+**Project ID Format:**
+The project_id must follow a specific format: `{platform}-{product}-v-{major}-{minor}-x`
+
+Examples:
+- `windows-ld-v-2-4-x` (Windows Lens Desktop version 2.4.x)
+- `macos-ld-v-2-2-x` (macOS Lens Desktop version 2.2.x)  
+- `windows-lr-v-1-14-x` (Windows Lens Room version 1.14.x)
+
+**Supported Products:**
+- `ld` - Lens Desktop
+- `lr` - Lens Room
+
+**Path Generation:**
+Results are automatically organized in a structured directory format:
+```
+/app/DMaas/allure-results/{platform}/{product}-{major}.{minor}.x-results/{lens_version}/
+```
+
+Example paths:
+- `/app/DMaas/allure-results/windows/lens-2.4.x-results/2.4.0.1234/`
+- `/app/DMaas/allure-results/macos/lens-2.2.x-results/2.2.0.987/`
+
+**Validation:**
+- Both `custom_results_dir=true` and `lens_version` must be provided together
+- The `project_id` format is strictly validated
+- Directories are automatically created if they don't exist
+
 #### Customize Executors Configuration
 `Available from Allure Docker Service version 2.13.3`
 
