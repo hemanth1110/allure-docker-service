@@ -660,10 +660,10 @@ If you use the query parameter `force_project_creation` with value `true`, the p
 The send-results endpoint now supports sending results to custom directory structures, which is particularly useful for organizing test results by product versions and platforms. This feature enables better organization and management of test results across different product variants.
 
 **Usage:**
-To use custom results directory, you must provide both `custom_results_dir=true` and `lens_version` parameters:
+To use custom results directory, you must provide both `use_custom_results_dir=true` and `lens_version` parameters:
 
 ```
-POST /send-results?project_id=windows-ld-v-2-4-x&custom_results_dir=true&lens_version=2.4.0.1234
+POST /send-results?project_id=windows-ld-v-2-4-x&use_custom_results_dir=true&lens_version=2.4.0.1234
 ```
 
 **Project ID Format:**
@@ -689,7 +689,7 @@ Example paths:
 - `/app/DMaas/allure-results/macos/lens-2.2.x-results/2.2.0.987/`
 
 **Validation:**
-- Both `custom_results_dir=true` and `lens_version` must be provided together
+- Both `use_custom_results_dir=true` and `lens_version` must be provided together
 - The `project_id` format is strictly validated
 - Directories are automatically created if they don't exist
 

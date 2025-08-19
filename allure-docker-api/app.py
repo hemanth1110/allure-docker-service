@@ -895,22 +895,19 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
             ):
             raise Exception("Header 'Content-Type' should start with 'application/json' or 'multipart/form-data'") #pylint: disable=line-too-long
 
-        custom_results_dir = request.args.get('custom_results_dir', '').lower() == 'true'
+        use_custom_results_dir = request.args.get('use_custom_results_dir', '').lower() == 'true'
         lens_version = request.args.get('lens_version')
         project_id = resolve_project(request.args.get('project_id'))
 
-        if custom_results_dir and not lens_version:
-            raise Exception('lens_version is required when custom_results_dir is true')
+        if bool(use_custom_results_dir) != bool(lens_version):
+            raise Exception('use_custom_results_dir and lens_version must both be provided together or both be omitted')
         
-        if not custom_results_dir and lens_version:
-            raise Exception('custom_results_dir must be true when lens_version is provided')
-    
         validated_results = []
         processed_files = []
         failed_files = []
         
-        if custom_results_dir and lens_version:
-            custom_path = generate_results_path(custom_results_dir, lens_version, project_id)
+        if use_custom_results_dir and lens_version:
+            custom_path = generate_results_path(use_custom_results_dir, lens_version, project_id)
             os.makedirs(custom_path, exist_ok=True)
             results_project = custom_path
         else:
@@ -1677,7 +1674,7 @@ def get_projects_filtered_by_id(project_id, projects):
 def get_project_path(project_id):
     return '{}/{}'.format(PROJECTS_DIRECTORY, project_id)
 
-def generate_results_path(custom_results_dir, lens_version, project_id):
+def generate_results_path(use_custom_results_dir, lens_version, project_id):
     """
     Generate appropriate path format for custom results directory.
     Example: /app/DMaas/allure-results/windows/lens-2.3.x-results/2.3.0.1234
@@ -1691,8 +1688,8 @@ def generate_results_path(custom_results_dir, lens_version, project_id):
     # Format: {platform}-{product}-v-{major}-{minor}-x
     project_parts = project_id.split('-')
 
-    if len(project_parts) < 6 or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, got: {project_id}")
+    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr'] or project_parts[2] != 'v' or project_parts[5] != 'x':
+        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr']}, got: {project_id}")
 
     platform = project_parts[0]  # windows or macos
     product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
