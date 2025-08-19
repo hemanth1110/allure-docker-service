@@ -907,7 +907,7 @@ def send_results_endpoint(): #pylint: disable=too-many-branches
         failed_files = []
         
         if use_custom_results_dir and lens_version:
-            custom_path = generate_results_path(use_custom_results_dir, lens_version, project_id)
+            custom_path = generate_results_path(lens_version, project_id)
             os.makedirs(custom_path, exist_ok=True)
             results_project = custom_path
         else:
@@ -1674,7 +1674,7 @@ def get_projects_filtered_by_id(project_id, projects):
 def get_project_path(project_id):
     return '{}/{}'.format(PROJECTS_DIRECTORY, project_id)
 
-def generate_results_path(use_custom_results_dir, lens_version, project_id):
+def generate_results_path(lens_version, project_id):
     """
     Generate appropriate path format for custom results directory.
     Example: /app/DMaas/allure-results/windows/lens-2.3.x-results/2.3.0.1234
