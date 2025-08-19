@@ -1701,9 +1701,6 @@ def generate_results_path(lens_version, project_id):
         'lr': 'lensr'
     }
 
-    if product_code not in product_mapping:
-        raise Exception(f"Unknown product code: {product_code}. Expected 'ld' or 'lr'")
-
     product_name = product_mapping[product_code]
     major_minor = f"{major}.{minor}"
 
