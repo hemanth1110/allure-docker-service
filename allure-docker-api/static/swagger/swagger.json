@@ -138,7 +138,8 @@
             "tags":[
                "Action"
             ],
-            "summary":"Send results files (from version 2.12.1)",
+            "summary":"Send results files (from version 2.12.1) with optional custom directory support",
+            "description":"Send results files to allure. Optionally specify use_custom_results_dir and lens_version to route results to a custom path format: /app/DMaas/allure-results/{platform}/{product}-{major.minor}.x-results/{full_version}. The platform and product info are extracted from project_id. Supported formats: windows-ld-v-2-4-x (lens desktop), macos-ld-v-2-2-x (lens desktop), windows-lr-v-1-14-x (lens room).",
             "consumes":[
                "application/json",
                "multipart/form-data"
@@ -149,7 +150,8 @@
                   "name":"project_id",
                   "schema":{
                      "type":"string"
-                  }
+                  },
+                  "description":"Project identifier. For custom paths, use format: {platform}-{product}-v-{major}-{minor}-x. Examples: windows-ld-v-2-4-x (lens desktop), macos-ld-v-2-2-x (lens desktop), windows-lr-v-1-14-x (lens room)"
                },
                {
                   "in":"query",
@@ -158,6 +160,24 @@
                      "type":"string"
                   },
                   "value": "false"
+               },
+               {
+                  "in":"query",
+                  "name":"use_custom_results_dir",
+                  "schema":{
+                     "type":"boolean"
+                  },
+                  "description":"If true, send to the custom location. If not set or false, send to allure's default location",
+                  "required":false
+               },
+               {
+                  "in":"query",
+                  "name":"lens_version",
+                  "schema":{
+                     "type":"string"
+                  },
+                  "description":"Full version string (e.g., 2.3.0.1234). Required when use_custom_results_dir is true",
+                  "required":false
                }
             ],
             "requestBody":{
