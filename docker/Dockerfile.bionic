@@ -6,8 +6,8 @@ ARG BUILD_REF
 ARG ALLURE_RELEASE=NONE
 ARG ALLURE_REPO=https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline
 ARG QEMU_ARCH
-ARG UID=1003
-ARG GID=1003
+ARG UID=1000
+ARG GID=1000
 ARG PYTHON_VERSION=3.8
 
 ######
