@@ -2088,6 +2088,7 @@ def delete_jira_ticket_endpoint(project_id, build_id, index):
     except Exception as ex:
         LOGGER.error('Error in delete_jira_ticket_endpoint: %s', str(ex))
         return jsonify({'error': 'Internal server error', 'message': str(ex)}), 500
+    
 
 if __name__ == '__main__':
     if DEV_MODE == 1:
