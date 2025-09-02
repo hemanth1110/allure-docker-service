@@ -1,6 +1,5 @@
 console.log('[JIRA-TICKETS] Plugin script loaded');
 
-// Utility functions (unique namespace for JIRA tickets)
 const JiraUtils = {
     getLensDesktopVersion: () => Array.from(document.querySelectorAll("[data-id='environment'] .table__row"))
         .find(r => r.children[0].textContent.trim() === 'lens-desktop-version')?.children[1].textContent.trim(),
@@ -28,14 +27,13 @@ const JiraUtils = {
         return fetch(url, options);
     },
 
-    // Extract ticket number from various JIRA URL formats
     extractTicketNumber: (ticketInput) => {
         const patterns = [
-            /\/([A-Z]+-\d+)(?:\/|$)/,  // Standard JIRA URL: .../PROJ-123/ or .../PROJ-123
-            /browse\/([A-Z]+-\d+)/,    // Browse URL: .../browse/PROJ-123
-            /ticket\/([A-Z]+-\d+)/,    // Ticket URL: .../ticket/PROJ-123
-            /issue\/([A-Z]+-\d+)/,     // Issue URL: .../issue/PROJ-123
-            /^([A-Z]+-\d+)$/           // Just the ticket number: PROJ-123
+            /\/([A-Z]+-\d+)(?:\/|$)/, 
+            /browse\/([A-Z]+-\d+)/,    
+            /ticket\/([A-Z]+-\d+)/,   
+            /issue\/([A-Z]+-\d+)/,     
+            /^([A-Z]+-\d+)$/          
         ];
         
         for (const pattern of patterns) {
@@ -43,12 +41,10 @@ const JiraUtils = {
             if (match) return match[1];
         }
         
-        // If no pattern matches, return the original input
         return ticketInput;
     }
 };
 
-// Main widget class
 class JiraTicketsWidget {
     constructor() {
         this.projectId = null;
@@ -105,7 +101,6 @@ class JiraTicketsWidget {
         
         if (!saveBtn || !ticketInput) return;
 
-        // Save ticket on button click or Enter key
         const saveTicket = () => this.saveTicket(ticketInput.value.trim());
         saveBtn.onclick = saveTicket;
         ticketInput.addEventListener('keypress', (e) => {
@@ -117,7 +112,6 @@ class JiraTicketsWidget {
         if (!ticketText) return alert('Please enter a JIRA ticket');
         if (!this.projectId || !this.buildId) return alert('Unable to determine project/build from URL');
 
-        // Extract just the ticket number from URL or keep as-is if already a ticket number
         const ticketNumber = JiraUtils.extractTicketNumber(ticketText);
 
         try {
@@ -235,10 +229,8 @@ class JiraTicketsWidget {
     }
 }
 
-// Create global instance
 let jiraWidget;
 
-// Backbone view wrapper for compatibility
 const JiraTicketsWidgetView = Backbone.Marionette.View.extend({
     template: () => "",
     initialize() {

@@ -28,7 +28,6 @@ const NotesUtils = {
     }
 };
 
-// Main widget class
 class NotesWidget {
     constructor() {
         this.projectId = null;
@@ -85,13 +84,11 @@ class NotesWidget {
         
         if (!saveBtn || !noteInput) return;
 
-        // Auto-expand textarea
         noteInput.addEventListener('input', function() {
             this.style.height = this.value.trim() === '' ? '36px' : 'auto';
             this.style.height = Math.min(this.scrollHeight, 200) + 'px';
         });
 
-        // Save note
         saveBtn.onclick = () => this.saveNote(noteInput.value.trim());
     }
 
@@ -208,10 +205,8 @@ class NotesWidget {
     }
 }
 
-// Create global instance
 let notesWidget;
 
-// Backbone view wrapper for compatibility
 const NotesWidgetView = Backbone.Marionette.View.extend({
     template: () => "",
     initialize() {
