@@ -37,7 +37,6 @@ Table of contents
             * [Content-Type - application/json](#content-type---applicationjson)
             * [Content-Type - multipart/form-data](#content-type---multipartform-data)
             * [Force Project Creation Option](#force-project-creation-option)
-          * [Notes and JIRA API](#notes-and-jira-api)
           * [Customize Executors Configuration](#customize-executors-configuration)
           * [API Response Less Verbose](#api-response-less-verbose)
           * [Switching version](#switching-version)
@@ -579,22 +578,6 @@ Available endpoints:
 
 `'DELETE'    /logout-refresh-token`
 
-##### Notes Endpoints
-
-`'GET'      /api/notes/{project_id}/{build_id}`
-
-`'POST'     /api/notes/{project_id}/{build_id}`
-
-`'DELETE'   /api/notes/{project_id}/{build_id}/{index}`
-
-##### JIRA Endpoints
-
-`'GET'      /api/jira/{project_id}/{build_id}`
-
-`'POST'     /api/jira/{project_id}/{build_id}`
-
-`'DELETE'   /api/jira/{project_id}/{build_id}/{index}`
-
 
 Access to http://localhost:5050 to see Swagger documentation with examples
 
@@ -709,74 +692,6 @@ Example paths:
 - Both `use_custom_results_dir=true` and `lens_version` must be provided together
 - The `project_id` format is strictly validated
 - Directories are automatically created if they don't exist
-
-#### Notes and JIRA API
-`Available from Allure Docker Service version 2.15.0+`
-
-The Notes and JIRA API endpoints allow you to manage notes and JIRA tickets associated with specific projects and builds. These endpoints are useful for tracking additional metadata and linking test results to issue tracking systems.
-
-##### Notes Management
-
-**Get Notes:**
-```sh
-curl -X GET "http://localhost:5050/api/notes/my-project/123" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Add Note:**
-```sh
-curl -X POST "http://localhost:5050/api/notes/my-project/123" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{"note": "This is a test note"}'
-```
-
-**Delete Note:**
-```sh
-curl -X DELETE "http://localhost:5050/api/notes/my-project/123/0" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-##### JIRA Tickets Management
-
-**Get JIRA Tickets:**
-```sh
-curl -X GET "http://localhost:5050/api/jira/my-project/123" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Add JIRA Ticket:**
-```sh
-curl -X POST "http://localhost:5050/api/jira/my-project/123" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{"ticket_id": "JIRA-789"}'
-```
-
-**Delete JIRA Ticket:**
-```sh
-curl -X DELETE "http://localhost:5050/api/jira/my-project/123/0" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-##### Data Storage Structure
-
-**Standard Projects:**
-Files are stored in: `{PROJECTS_DIRECTORY}/{project_id}/reports/{build_id}/data/`
-- notes.json
-- jira.json
-
-**Custom DMaas Projects:**
-For projects matching pattern `{platform}-(ld|lr)-v-{major}-{minor}-x`, files are stored in:
-`/home/alfonso/DMaas/allure-results/{platform}/{product}-{version}-results/{version_path}/`
-- notes.json
-- tickets.json
-
-##### Authentication & Security
-- All Notes and JIRA endpoints require admin authentication (JWT token with admin role)
-- Use the `/login` endpoint to obtain a JWT token first
-- Include the token in the `Authorization: Bearer TOKEN` header
-- CORS is enabled for cross-origin requests
 
 #### Customize Executors Configuration
 `Available from Allure Docker Service version 2.13.3`
