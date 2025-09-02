@@ -1,5 +1,3 @@
-console.log('[NOTES] Plugin script loaded');
-
 const NotesUtils = {
     getLensDesktopVersion: () => Array.from(document.querySelectorAll("[data-id='environment'] .table__row"))
         .find(r => r.children[0].textContent.trim() === 'lens-desktop-version')?.children[1].textContent.trim(),
@@ -39,7 +37,6 @@ class NotesWidget {
         const ids = NotesUtils.parseUrl();
         this.projectId = ids.projectId;
         this.buildId = ids.buildId;
-        console.log('[NOTES] Extracted - Project:', this.projectId, 'Build:', this.buildId);
         
         if (this.buildId === 'latest' && this.projectId) {
             this.getActualReportId();
@@ -52,7 +49,6 @@ class NotesWidget {
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
-                console.log('[NOTES] Updated Build ID to:', this.buildId);
             }
         } catch (error) {
             console.error('[NOTES] Error fetching project data:', error);
@@ -182,7 +178,6 @@ class NotesWidget {
             const data = await response.json();
             
             if (data.message) {
-                console.log('[NOTES] Note deleted');
                 this.loadNotes();
             } else {
                 alert('Error deleting note');
@@ -217,6 +212,4 @@ const NotesWidgetView = Backbone.Marionette.View.extend({
     }
 });
 
-console.log('[NOTES] Registering widget');
 allure.api.addWidget('widgets', 'notes-widget', NotesWidgetView);
-console.log('[NOTES] Widget registration complete');

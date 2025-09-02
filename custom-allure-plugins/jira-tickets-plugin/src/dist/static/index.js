@@ -1,5 +1,3 @@
-console.log('[JIRA-TICKETS] Plugin script loaded');
-
 const JiraUtils = {
     getLensDesktopVersion: () => Array.from(document.querySelectorAll("[data-id='environment'] .table__row"))
         .find(r => r.children[0].textContent.trim() === 'lens-desktop-version')?.children[1].textContent.trim(),
@@ -56,7 +54,6 @@ class JiraTicketsWidget {
         const ids = JiraUtils.parseUrl();
         this.projectId = ids.projectId;
         this.buildId = ids.buildId;
-        console.log('[JIRA-TICKETS] Extracted - Project:', this.projectId, 'Build:', this.buildId);
         
         if (this.buildId === 'latest' && this.projectId) {
             this.getActualReportId();
@@ -69,7 +66,6 @@ class JiraTicketsWidget {
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
-                console.log('[JIRA-TICKETS] Updated Build ID to:', this.buildId);
             }
         } catch (error) {
             console.error('[JIRA-TICKETS] Error fetching project data:', error);
@@ -206,7 +202,6 @@ class JiraTicketsWidget {
             const data = await response.json();
             
             if (data.message) {
-                console.log('[JIRA-TICKETS] Ticket deleted');
                 this.loadTickets();
             } else {
                 alert('Error deleting ticket');
@@ -241,6 +236,4 @@ const JiraTicketsWidgetView = Backbone.Marionette.View.extend({
     }
 });
 
-console.log('[JIRA-TICKETS] Registering widget');
 allure.api.addWidget('widgets', 'jira-tickets-widget', JiraTicketsWidgetView);
-console.log('[JIRA-TICKETS] Widget registration complete');
