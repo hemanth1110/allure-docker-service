@@ -1,7 +1,16 @@
+let jiraTicketsApiBaseUrl = "";
+let jiraTicketsUrlTemplate = "https://hp-jira.external.hp.com/browse/{ticketNumber}";
+fetch('jira-tickets-plugin-env.json')
+    .then(res => res.json())
+    .then(cfg => {
+        jiraTicketsApiBaseUrl = cfg.jiraTicketsApiBaseUrl || "";
+        jiraTicketsUrlTemplate = cfg.jiraTicketsUrlTemplate || jiraTicketsUrlTemplate;
+    });
+
 const JiraUtils = {
     getLensDesktopVersion: () => Array.from(document.querySelectorAll("[data-id='environment'] .table__row"))
         .find(r => r.children[0].textContent.trim() === 'lens-desktop-version')?.children[1].textContent.trim(),
-    
+
     parseUrl: () => {
         const url = window.location.href;
         const projectMatch = url.match(/\/projects\/([^\/]+)\/reports/);
@@ -11,15 +20,15 @@ const JiraUtils = {
             buildId: buildMatch?.[1] || null
         };
     },
-    
+
     buildApiUrl: (projectId, buildId, endpoint = 'jira', index = '') => 
-        `http://localhost:5050/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
-    
+        `${jiraTicketsApiBaseUrl}/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
+
     addLensVersion: (url) => {
         const version = JiraUtils.getLensDesktopVersion();
         return version ? `${url}?lensDesktopVersion=${encodeURIComponent(version)}` : url;
     },
-    
+
     apiCall: async (url, options = {}) => {
         url = JiraUtils.addLensVersion(url);
         return fetch(url, options);
@@ -62,7 +71,7 @@ class JiraTicketsWidget {
 
     async getActualReportId() {
         try {
-            const response = await fetch(`http://localhost:5050/projects/${this.projectId}`);
+            const response = await fetch(`${apiBaseUrl}/projects/${this.projectId}`);
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
@@ -170,17 +179,24 @@ class JiraTicketsWidget {
 
         ticketsList.innerHTML = tickets.map(ticket => {
             const ticketNumber = JiraUtils.extractTicketNumber(ticket.ticket_id);
-            const jiraUrl = `https://hp-jira.external.hp.com/browse/${ticketNumber}`;
-            
+            const isValidTicket = /^[A-Z]+-\d+$/.test(ticketNumber);
+            const isValidUrl = /^(https?:\/\/[^\s]+)$/.test(ticket.ticket_id);
+            let ticketDisplay;
+            if (isValidTicket) {
+                const jiraUrl = jiraTicketsUrlTemplate.replace('{ticketNumber}', ticketNumber);
+                ticketDisplay = `<a href="${jiraUrl}" target="_blank" style="color: #007bff; text-decoration: none;" title="${jiraUrl}">${ticketNumber}</a>`;
+            } else if (isValidUrl) {
+                ticketDisplay = `<a href="${ticket.ticket_id}" target="_blank" style="color: #007bff; text-decoration: none;" title="${ticket.ticket_id}">${ticket.ticket_id}</a>`;
+            } else {
+                ticketDisplay = ticket.ticket_id;
+            }
             return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin-bottom: 8px; 
                             background: #fff; border: 1px solid #e1e5e9; border-radius: 6px; transition: all 0.15s ease;"
                      onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#d0d7de';"
                      onmouseout="this.style.backgroundColor='#fff'; this.style.borderColor='#e1e5e9';">
                     <div style="flex: 1; padding-right: 16px; word-wrap: break-word;">
-                        <a href="${jiraUrl}" target="_blank" style="color: #007bff; text-decoration: none;" title="${jiraUrl}">
-                            ${ticketNumber}
-                        </a>
+                        ${ticketDisplay}
                     </div>
                     <button onclick="jiraWidget.deleteTicket('${ticket.index}')"
                             style="background: none; border: none; cursor: pointer; padding: 6px; color: #656d76; font-size: 14px; 

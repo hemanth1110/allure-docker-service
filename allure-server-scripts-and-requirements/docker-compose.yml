@@ -12,9 +12,9 @@ services:
     ports:
       - "5050:5050"
     volumes:
-      - /home/user_name/allure/projects:/app/projects
+      - ${ALLURE_HOME}/projects:/app/projects
       - ./allure.yml:/allure/config/allure.yml
-      - /home/user_name/allure/notes-plugin/src/dist:/allure/plugins/notes-plugin
-      - /home/user_name/allure/jira-tickets-plugin/src/dist:/allure/plugins/jira-tickets-plugin
-      - /home/user_name/DMaas:/app/DMaas
+      - ${ALLURE_HOME}/notes-plugin/src/dist:/allure/plugins/notes-plugin
+      - ${ALLURE_HOME}/jira-tickets-plugin/src/dist:/allure/plugins/jira-tickets-plugin
+      - ${DMAAS_DIR:-/home/user_name/DMaas}:/app/DMaas
     restart: always

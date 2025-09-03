@@ -1,7 +1,12 @@
+let notesPluginApiBaseUrl = "";
+fetch('notes-plugin-env.json')
+    .then(res => res.json())
+    .then(cfg => { notesPluginApiBaseUrl = cfg.notesPluginApiBaseUrl || ""; });
+
 const NotesUtils = {
     getLensDesktopVersion: () => Array.from(document.querySelectorAll("[data-id='environment'] .table__row"))
         .find(r => r.children[0].textContent.trim() === 'lens-desktop-version')?.children[1].textContent.trim(),
-    
+
     parseUrl: () => {
         const url = window.location.href;
         const projectMatch = url.match(/\/projects\/([^\/]+)\/reports/);
@@ -11,15 +16,15 @@ const NotesUtils = {
             buildId: buildMatch?.[1] || null
         };
     },
-    
+
     buildApiUrl: (projectId, buildId, endpoint = 'notes', index = '') => 
-        `http://localhost:5050/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
-    
+        `${notesPluginApiBaseUrl}/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
+
     addLensVersion: (url) => {
         const version = NotesUtils.getLensDesktopVersion();
         return version ? `${url}?lensDesktopVersion=${encodeURIComponent(version)}` : url;
     },
-    
+
     apiCall: async (url, options = {}) => {
         url = NotesUtils.addLensVersion(url);
         return fetch(url, options);
@@ -45,7 +50,7 @@ class NotesWidget {
 
     async getActualReportId() {
         try {
-            const response = await fetch(`http://localhost:5050/projects/${this.projectId}`);
+            const response = await fetch(`${notesPluginApiBaseUrl}/projects/${this.projectId}`);
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
@@ -134,7 +139,7 @@ class NotesWidget {
             }
 
             const notes = Object.keys(data).map(key => ({
-                content: data[key].content || data[key],
+                content: data[key].note || '',
                 index: key
             })).sort((a, b) => parseInt(b.index) - parseInt(a.index));
 

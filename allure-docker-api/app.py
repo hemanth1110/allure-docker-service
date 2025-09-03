@@ -14,6 +14,8 @@ import tempfile
 import subprocess
 import zipfile
 import waitress
+from filelock import FileLock
+
 from werkzeug.utils import secure_filename
 from flask import (
     Flask, jsonify, render_template, redirect,
@@ -1871,11 +1873,17 @@ def read_json_file(file_path):
         return {}
 
 def write_json_file(file_path, data):
-    """Write JSON file"""
+    """Write JSON file with file lock and logging"""
     ensure_directory_exists(file_path)
+    lock_path = file_path + ".lock"
+    lock = FileLock(lock_path)
     try:
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent=2)
+        LOGGER.debug('Acquiring file lock for: %s', file_path)
+        with lock:
+            LOGGER.debug('File lock acquired for: %s', file_path)
+            with open(file_path, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=2)
+        LOGGER.debug('File lock released for: %s', file_path)
     except Exception as error:
         LOGGER.error('Error writing file: %s - %s', file_path, error)
         raise error
@@ -1907,31 +1915,49 @@ def handle_post_request(project_id, build_id, data_value, data_key,
                        get_file_path_fn, data_type, success_message, lens_desktop_version=None):
     """Generic function to handle POST requests (add data)"""
     file_path = get_file_path_fn(project_id, build_id, lens_desktop_version)
-    
+
     LOGGER.info('%s POST Operation - Project: %s, Build: %s, Data: %s, LensDesktopVersion: %s', 
                 data_type.upper(), project_id, build_id, data_value, lens_desktop_version)
-    
-    if not data_value or not isinstance(data_value, str):
+
+    if not data_value or not isinstance(data_value, str) or not data_value.strip():
         LOGGER.warning('%s POST Validation Error - Project: %s, Build: %s, Missing or invalid %s', 
                       data_type.upper(), project_id, build_id, data_key)
         return jsonify({'error': '{} is required and must be a string'.format(data_key)}), 400
-    
+
+    if len(data_value) > 2000:
+        LOGGER.warning('%s POST Validation Error - Project: %s, Build: %s, %s exceeds character limit', 
+                      data_type.upper(), project_id, build_id, data_key)
+        return jsonify({'error': '{} must not exceed 2000 characters'.format(data_key)}), 400
+
+    try:
+        sanitized_value = str(data_value)
+        json.dumps(sanitized_value)
+    except Exception as error:
+        LOGGER.warning('%s POST Validation Error - Project: %s, Build: %s, Invalid JSON content in %s', 
+                      data_type.upper(), project_id, build_id, data_key)
+        return jsonify({'error': '{} contains invalid JSON content'.format(data_key)}), 400
+
     try:
         data = read_json_file(file_path)
         next_index = get_next_index(data)
-        data[str(next_index)] = data_value
+        record = {
+            data_key: sanitized_value,
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+        }
+        data[str(next_index)] = record
         write_json_file(file_path, data)
-        
+
         LOGGER.info('%s POST Success - Project: %s, Build: %s, Index: %s, Total: %s', 
                     data_type.upper(), project_id, build_id, next_index, len(data))
-        
+
         response_data = {
             'message': success_message,
             'index': next_index,
-            data_key: data_value,
+            data_key: sanitized_value,
+            'timestamp': record["timestamp"],
             'total{}'.format(data_type.capitalize()): len(data)
         }
-        return jsonify(response_data), 200
+        return jsonify(response_data), 201
     except Exception as error:
         LOGGER.error('%s POST Error - Project: %s, Build: %s, Error: %s', 
                      data_type.upper(), project_id, build_id, str(error))
@@ -1974,7 +2000,7 @@ def handle_delete_request(project_id, build_id, index, get_file_path_fn,
             'deleted{}'.format(data_type.capitalize()): deleted_item,
             'remaining{}s'.format(data_type.capitalize()): len(data)
         }
-        return jsonify(response_data), 200
+        return jsonify(response_data), 201
     except Exception as error:
         LOGGER.error('%s DELETE Error - Project: %s, Build: %s, Index: %s, Error: %s', 
                      data_type.upper(), project_id, build_id, index, str(error))
