@@ -13,7 +13,7 @@ const JiraUtils = {
     },
     
     buildApiUrl: (projectId, buildId, endpoint = 'jira', index = '') => 
-        `http://10.223.20.65:5050/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
+        `http://localhost:5050/allure-docker-service/api/${endpoint}/${projectId}/${buildId}${index ? '/' + index : ''}`,
     
     addLensVersion: (url) => {
         const version = JiraUtils.getLensDesktopVersion();
@@ -62,7 +62,7 @@ class JiraTicketsWidget {
 
     async getActualReportId() {
         try {
-            const response = await fetch(`http://10.223.20.65:5050/projects/${this.projectId}`);
+            const response = await fetch(`http://localhost:5050/projects/${this.projectId}`);
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
