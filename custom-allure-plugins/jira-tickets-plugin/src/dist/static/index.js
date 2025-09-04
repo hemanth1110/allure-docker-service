@@ -71,7 +71,7 @@ class JiraTicketsWidget {
 
     async getActualReportId() {
         try {
-            const response = await fetch(`${apiBaseUrl}/projects/${this.projectId}`);
+            const response = await fetch(`${jiraTicketsApiBaseUrl}/projects/${this.projectId}`);
             const data = await response.json();
             if (data.data?.project?.reports_id?.length > 1) {
                 this.buildId = data.data.project.reports_id[1];
@@ -90,7 +90,7 @@ class JiraTicketsWidget {
                         <input type="text" id="ticket-input" placeholder="Add JIRA ticket URL..." 
                                style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; font-family: inherit; height: 36px;" />
                         <button id="save-ticket-btn" 
-                                style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 20px;">
                             Add
                         </button>
                     </div>

@@ -69,7 +69,7 @@ class NotesWidget {
                         <textarea id="note-input" placeholder="Add a new note..." 
                                style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; resize: none; font-family: inherit; height: 36px; min-height: 36px; max-height: 200px; overflow-y: hidden;"></textarea>
                         <button id="save-note-btn" 
-                                style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; align-self: flex-start;">
+                                style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 20px; align-self: flex-start;">
                             Add
                         </button>
                     </div>
@@ -162,7 +162,7 @@ class NotesWidget {
                  onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#d0d7de';"
                  onmouseout="this.style.backgroundColor='#fff'; this.style.borderColor='#e1e5e9';">
                 <div style="flex: 1; padding-right: 16px; word-wrap: break-word;">
-                    ${note.content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')}
+                    ${note.content.replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')}
                 </div>
                 <button onclick="notesWidget.deleteNote('${note.index}')"
                         style="background: none; border: none; cursor: pointer; padding: 6px; color: #656d76; font-size: 14px; 
