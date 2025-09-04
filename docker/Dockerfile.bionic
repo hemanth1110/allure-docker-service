@@ -7,8 +7,8 @@ ARG ALLURE_RELEASE=NONE
 ARG ALLURE_REPO=https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline
 ARG QEMU_ARCH
 # change the UID and GID to the user who will run this docker image. (1000 is for the first use other than root)
-ARG UID=1000
-ARG GID=1000
+ARG UID=1003
+ARG GID=1003
 ARG PYTHON_VERSION=3.8
 
 ######
