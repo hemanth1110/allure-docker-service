@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'projects_overview_config.json')
-OUTPUT_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), '../projects/projects_overview.html'))
+OUTPUT_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), 'projects_overview.html'))
 
 
 def load_config():
@@ -12,7 +12,7 @@ def load_config():
         return json.load(f)
 
 def fetch_projects(api_url):
-    resp = requests.get(api_url)
+    resp = requests.get(api_url, verify=False)
     resp.raise_for_status()
     return resp.json()['data']['projects']
 
