@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'projects_overview_config.json')
-OUTPUT_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), '../allure-docker-api/static/projects_overview.html'))
+OUTPUT_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), '../projects/projects_overview.html'))
 
 
 def load_config():
