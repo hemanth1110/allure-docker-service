@@ -1,4 +1,6 @@
-#pylint: disable=too-many-lines
+from flask import Response
+import requests as ext_requests
+import datetime
 from logging.config import dictConfig
 from functools import wraps
 from subprocess import call
@@ -65,8 +67,52 @@ class UserAccess:
         return self.__class__.__name__
 
 app = Flask(__name__) #pylint: disable=invalid-name
-
 LOGGER = create_logger(app)
+
+# --- Projects Overview Route ---
+@app.route('/allure-docker-service/projects/projects_overview.html', strict_slashes=False)
+def projects_overview_html():
+    import json
+    config_path = './projects_overview_config.json'
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    resp = ext_requests.get(config['projects_api_url'], verify=False)
+    projects = resp.json()['data']['projects']
+
+    def extract_versions(projects, prefix):
+        filtered = [k for k in projects if k.startswith(prefix)]
+        def version_key(name):
+            parts = name[len(prefix):].split('-')
+            nums = [int(p) for p in parts if p.isdigit()]
+            return nums
+        filtered.sort(key=version_key, reverse=True)
+        return filtered
+
+    def build_html(groups, projects):
+        html = ['<!DOCTYPE html>', '<html lang="en">', '<head>',
+                '<meta charset="UTF-8">', '<title>Allure Projects Overview</title>',
+                '<style>body{font-family:sans-serif;} .group{margin-bottom:2em;} h2{margin-bottom:0.5em;} ul{list-style:disc;margin-left:2em;}</style>',
+                '</head>', '<body>']
+        html.append('<h1>Allure Projects Overview</h1>')
+        for group in groups:
+            header = group['header']
+            prefix = group['prefix']
+            count = group.get('count', 2)
+            html.append(f'<div class="group"><h2>{header}</h2><ul>')
+            versions = extract_versions(projects, prefix)[:count]
+            for v in versions:
+                url = f"{projects[v]['uri']}/reports/latest/index.html"
+                html.append(f'<li><a href="{url}" target="_blank">{v}</a></li>')
+            html.append('</ul></div>')
+        now_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        html.append(f'<footer><hr><div style="font-size:small;">Last generated: {now_utc}</div></footer>')
+        html.append('</body></html>')
+        return '\n'.join(html)
+
+    html = build_html(config['groups'], projects)
+    return Response(html, mimetype='text/html')
+#pylint: disable=too-many-lines
+
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['JWT_BLACKLIST_ENABLED'] = True
 app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']

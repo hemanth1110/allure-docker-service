@@ -54,7 +54,7 @@ LABEL org.label-schema.build-date=${BUILD_DATE} \
     authors="Frank Escobar <fescobar.systems@gmail.com>, Raymond Mouthaan <raymondmmouthaan@gmail.com>"
 
 # QEMU - Quick Emulation
-# COPY tmp/qemu-$QEMU_ARCH-static /usr/bin/qemu-$QEMU_ARCH-static
+COPY tmp/qemu-$QEMU_ARCH-static /usr/bin/qemu-$QEMU_ARCH-static
 
 RUN apt-get update && \
     apt-get install -y software-properties-common && \
@@ -68,10 +68,9 @@ RUN apt-get update && \
       python3-dev \
       unzip && \
     ln -s `which python3` /usr/bin/python && \
-        pip3 install --upgrade pip setuptools && \
-        python${PYTHON_VERSION} -m pip install --upgrade pip setuptools wheel waitress && \
-        python${PYTHON_VERSION} -m pip install -v Flask==3.0.2 Flask-JWT-Extended==4.6.0 flask-swagger-ui==4.11.1 filelock && \
-        pip3 install requests && \
+    pip3 install --upgrade pip && \
+    python${PYTHON_VERSION} -m pip install --upgrade pip setuptools wheel waitress && \
+    python${PYTHON_VERSION} -m pip install -v Flask==3.0.2 Flask-JWT-Extended==4.6.0 flask-swagger-ui==4.11.1 requests==2.31.0 filelock && \
     curl ${ALLURE_REPO}/${ALLURE_RELEASE}/allure-commandline-${ALLURE_RELEASE}.zip -L -o /tmp/allure-commandline.zip && \
         unzip -q /tmp/allure-commandline.zip -d / && \
         apt-get remove -y unzip && \
@@ -113,8 +112,6 @@ RUN echo -n $(allure --version) > ${ALLURE_VERSION} && \
 WORKDIR $ROOT
 COPY --chown=allure:allure allure-docker-api $ROOT/allure-docker-api
 COPY --chown=allure:allure allure-docker-scripts $ROOT/
-COPY --chown=allure:allure allure-server-scripts-and-requirements/generate_projects_overview_html.py /app/
-COPY --chown=allure:allure allure-server-scripts-and-requirements/projects_overview_config.json /app/
 RUN chmod +x $ROOT/*.sh && \
     mkdir $RESULTS_DIRECTORY && \
     mkdir -p $DEFAULT_PROJECT_REPORTS/latest && \
@@ -140,4 +137,4 @@ HEALTHCHECK --interval=10s --timeout=60s --retries=3 \
 
 USER allure
 
-CMD python3 /app/generate_projects_overview_html.py && $ROOT/runAllureDeprecated.sh & $ROOT/runAllureApp.sh & $ROOT/checkAllureResultsFiles.sh
+CMD $ROOT/runAllureDeprecated.sh & $ROOT/runAllureApp.sh & $ROOT/checkAllureResultsFiles.sh
