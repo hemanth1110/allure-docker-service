@@ -73,7 +73,7 @@ LOGGER = create_logger(app)
 @app.route('/allure-docker-service/projects/projects_overview.html', strict_slashes=False)
 def projects_overview_html():
     import json
-    config_path = './projects_overview_config.json'
+    config_path = '/app/allure-docker-api/projects_overview_config.json'
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
     resp = ext_requests.get(config['projects_api_url'], verify=False)
