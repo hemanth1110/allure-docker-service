@@ -1,0 +1,5 @@
+id: jira-tickets-plugin
+name: JIRA Tickets Widget
+description: A JIRA tickets widget for Allure reports to track and manage JIRA tickets
+jsFiles:
+  - index.js
