@@ -1,0 +1,5 @@
+id: notes-plugin
+name: Notes Widget
+description: A notes widget for Allure reports
+jsFiles:
+  - index.js

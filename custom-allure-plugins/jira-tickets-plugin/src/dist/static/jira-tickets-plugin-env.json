@@ -1,0 +1,4 @@
+{
+  "jiraTicketsApiBaseUrl": "http://10.223.20.65:5050",
+  "jiraTicketsUrlTemplate": "https://hp-jira.external.hp.com/browse/{ticketNumber}"
+}

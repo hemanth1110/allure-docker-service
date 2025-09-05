@@ -1,0 +1,5 @@
+1.0.0 (2025-09-02)
+  - [GTSS-4815]
+    - Added notes and jira tickets plugin UI.
+    - Added enpoints for notes and jira tickets management.
+    - started versioning and manintaining changelog.

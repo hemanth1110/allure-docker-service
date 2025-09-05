@@ -1,0 +1,20 @@
+version: '3.3'
+services:
+  allure:
+    image: "hemanthchow/allure-docker-service:1.0.0"
+    user: ${MY_USER}
+    container_name: allure
+    environment:
+      USE_CUSTOM_BUILD_ORDER: 1
+      CHECK_RESULTS_EVERY_SECONDS: NONE
+      KEEP_HISTORY: 1
+      KEEP_HISTORY_LATEST: 365
+    ports:
+      - "5050:5050"
+    volumes:
+      - ${ALLURE_HOME}/projects:/app/projects
+      - ./allure.yml:/allure/config/allure.yml
+      - ${ALLURE_HOME}/notes-plugin/src/dist:/allure/plugins/notes-plugin
+      - ${ALLURE_HOME}/jira-tickets-plugin/src/dist:/allure/plugins/jira-tickets-plugin
+      - ${DMAAS_DIR:-/home/user_name/DMaas}:/app/DMaas
+    restart: always
