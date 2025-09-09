@@ -3,22 +3,22 @@
     {
       "header": "Lens Desktop Windows",
       "prefix": "windows-ld-v-2-",
-      "count": 2
+      "count": 3
     },
     {
       "header": "Lens Desktop Mac",
       "prefix": "macos-ld-v-2-",
-      "count": 2
+      "count": 3
     },
     {
       "header": "Lens Room",
       "prefix": "windows-lr-v-1-",
-      "count": 2
+      "count": 3
     },
     {
       "header": "Cloud",
-      "prefix": "cloud",
-      "count": 2
+      "prefix": "lens-cloud-regression",
+      "count": 4
     }
   ],
   "projects_api_url": "https://allure-sqa.poly.com/allure-docker-service/projects"
