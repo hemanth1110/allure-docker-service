@@ -34,5 +34,5 @@
       "count": 3
     }
   ],
-  "projects_api_url": "https://allure-sqa.poly.com/allure-docker-service/projects"
+  "projects_api_url": "http://localhost:5050/allure-docker-service/projects"
 }
