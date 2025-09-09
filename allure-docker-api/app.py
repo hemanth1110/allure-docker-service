@@ -79,12 +79,19 @@ def projects_overview_html():
     resp = ext_requests.get(config['projects_api_url'], verify=False)
     projects = resp.json()['data']['projects']
 
-    def extract_versions(projects, prefix):
-        filtered = [k for k in projects if k.startswith(prefix)]
+
+    def extract_versions(projects, prefixes):
+        # Support both string and list for backward compatibility
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
+        filtered = [k for k in projects if any(k.startswith(p) for p in prefixes)]
         def version_key(name):
-            parts = name[len(prefix):].split('-')
-            nums = [int(p) for p in parts if p.isdigit()]
-            return nums
+            for p in prefixes:
+                if name.startswith(p):
+                    parts = name[len(p):].split('-')
+                    nums = [int(part) for part in parts if part.isdigit()]
+                    return nums
+            return []
         filtered.sort(key=version_key, reverse=True)
         return filtered
 
@@ -96,10 +103,10 @@ def projects_overview_html():
         html.append('<h1>Allure Projects Overview</h1>')
         for group in groups:
             header = group['header']
-            prefix = group['prefix']
+            prefixes = group['prefix']
             count = group.get('count', 2)
             html.append(f'<div class="group"><h2>{header}</h2><ul>')
-            versions = extract_versions(projects, prefix)[:count]
+            versions = extract_versions(projects, prefixes)[:count]
             for v in versions:
                 url = f"{projects[v]['uri']}/reports/latest/index.html"
                 html.append(f'<li><a href="{url}" target="_blank">{v}</a></li>')

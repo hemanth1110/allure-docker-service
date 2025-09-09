@@ -16,9 +16,22 @@
       "count": 3
     },
     {
-      "header": "Cloud",
+      "header": "Lens Cloud",
       "prefix": "lens-cloud-regression",
       "count": 4
+    },
+    {
+      "header": "Clock Work",
+      "prefix": "cw",
+      "count": 4
+    },
+    {
+      "header": "Mobile",
+      "prefix": [
+        "ios",
+        "android"
+      ],
+      "count": 3
     }
   ],
   "projects_api_url": "https://allure-sqa.poly.com/allure-docker-service/projects"
