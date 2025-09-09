@@ -1,3 +1,7 @@
+1.1.0 (2025-09-09)
+  - [GTSS-4859]
+    - Adds a new dynamic projects overview HTML page at /allure-docker-service/projects/projects_overview.html, grouping projects as defined in a config file.
+
 1.0.0 (2025-09-02)
   - [GTSS-4815]
     - Added notes and jira tickets plugin UI.
