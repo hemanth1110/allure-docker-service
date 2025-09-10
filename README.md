@@ -8,6 +8,16 @@
 
 Table of contents
 =================
+## Allure Projects Overview Page
+
+A new **Projects Overview** page has been added to the Allure API. This page provides an overview of all projects.
+
+You can access the Projects Overview page at the following URLs:
+
+- **Production:** [https://allure-sqa.poly.com/allure-docker-service/projects/projects_overview.html](https://allure-sqa.poly.com/allure-docker-service/projects/projects_overview.html)
+- **Development:** [http://10.223.20.65:5050/allure-docker-service/projects/projects_overview.html](http://10.223.20.65:5050/allure-docker-service/projects/projects_overview.html)
+- **Local:** [http://localhost:5050/allure-docker-service/projects/projects_overview.html](http://localhost:5050/allure-docker-service/projects/projects_overview.html)
+
    * [FEATURES](#FEATURES)
       * [Docker Hub](#docker-hub)
       * [Docker Versions](#docker-versions)
