@@ -33,6 +33,5 @@
       ],
       "count": 3
     }
-  ],
-  "projects_api_url": "http://localhost:5050/allure-docker-service/projects"
+  ]
 }
