@@ -84,6 +84,24 @@ def projects_overview_html():
         if isinstance(prefixes, str):
             prefixes = [prefixes]
         filtered = [k for k in projects if any(k.startswith(p) for p in prefixes)]
+
+        # Remove temporary projects with a suffix of -<digits> if a base exists
+        import re
+        base_names = set()
+        temp_pattern = re.compile(r"^(.*)-\d+$")
+        for name in filtered:
+            m = temp_pattern.match(name)
+            if not m:
+                base_names.add(name)
+
+        def is_temp_and_has_base(name):
+            m = temp_pattern.match(name)
+            if m and m.group(1) in base_names:
+                return True
+            return False
+
+        filtered = [name for name in filtered if not is_temp_and_has_base(name)]
+
         def version_key(name):
             for p in prefixes:
                 if name.startswith(p):
