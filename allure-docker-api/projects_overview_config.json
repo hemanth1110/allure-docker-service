@@ -1,0 +1,37 @@
+{
+  "groups": [
+    {
+      "header": "Lens Desktop Windows",
+      "prefix": "windows-ld-v-2-",
+      "count": 3
+    },
+    {
+      "header": "Lens Desktop Mac",
+      "prefix": "macos-ld-v-2-",
+      "count": 3
+    },
+    {
+      "header": "Lens Room",
+      "prefix": "windows-lr-v-1-",
+      "count": 3
+    },
+    {
+      "header": "Lens Cloud",
+      "prefix": "lens-cloud-regression",
+      "count": 4
+    },
+    {
+      "header": "Clock Work",
+      "prefix": "cw",
+      "count": 4
+    },
+    {
+      "header": "Mobile",
+      "prefix": [
+        "ios",
+        "android"
+      ],
+      "count": 3
+    }
+  ]
+}

@@ -17,4 +17,5 @@ services:
       - ${ALLURE_HOME}/notes-plugin/src/dist:/allure/plugins/notes-plugin
       - ${ALLURE_HOME}/jira-tickets-plugin/src/dist:/allure/plugins/jira-tickets-plugin
       - ${DMAAS_DIR:-/home/user_name/DMaas}:/app/DMaas
+      - ${ALLURE_HOME}/projects_overview_config.json:/app/allure-docker-api/projects_overview_config.json
     restart: always
