@@ -735,6 +735,25 @@
             }
          }
       },
+      "/projects/projects_overview.html": {
+         "get": {
+            "tags": ["Project"],
+            "summary": "Get Allure Projects Overview HTML page",
+            "description": "Returns an HTML overview of all Allure projects.",
+            "responses": {
+               "200": {
+                  "description": "HTML overview page",
+                  "content": {
+                     "text/html": {
+                        "schema": {
+                           "type": "string"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
       "/api/notes/{project_id}/{build_id}":{
          "get":{
             "tags":[

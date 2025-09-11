@@ -68,145 +68,6 @@ class UserAccess:
 app = Flask(__name__) #pylint: disable=invalid-name
 LOGGER = create_logger(app)
 
-# --- Projects Overview Route ---
-@app.route('/allure-docker-service/projects/projects_overview.html', strict_slashes=False)
-def projects_overview_html():
-    import json
-    config_path = '/app/allure-docker-api/projects_overview_config.json'
-    with open(config_path, 'r', encoding='utf-8') as f:
-        config = json.load(f)
-    # Use internal function to get projects data
-    projects_dirs = os.listdir(PROJECTS_DIRECTORY)
-    projects = get_projects(projects_dirs)
-
-    def extract_versions(projects, prefixes):
-        # Support both string and list for backward compatibility
-        if isinstance(prefixes, str):
-            prefixes = [prefixes]
-        filtered = [k for k in projects if any(k.startswith(p) for p in prefixes)]
-
-        # Remove temporary projects with a suffix of -<digits> if a base exists
-        import re
-        base_names = set()
-        temp_pattern = re.compile(r"^(.*)-\d+$")
-        for name in filtered:
-            m = temp_pattern.match(name)
-            if not m:
-                base_names.add(name)
-
-        def is_temp_and_has_base(name):
-            m = temp_pattern.match(name)
-            if m and m.group(1) in base_names:
-                return True
-            return False
-
-        filtered = [name for name in filtered if not is_temp_and_has_base(name)]
-
-        def version_key(name):
-            for p in prefixes:
-                if name.startswith(p):
-                    parts = name[len(p):].split('-')
-                    nums = [int(part) for part in parts if part.isdigit()]
-                    return nums
-            return []
-        filtered.sort(key=version_key, reverse=True)
-        return filtered
-
-    def build_html(groups, projects):
-        html = [
-            '<!DOCTYPE html>',
-            '<html lang="en">',
-            '<head>',
-            '<meta charset="UTF-8">',
-            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-            '<title>Allure Projects Overview</title>',
-            '<style>',
-            '''
-            body {
-                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-                margin: 0;
-                padding: 0 2em;
-                background-color: #f9f9f9;
-                color: #333;
-            }
-            h1 {
-                text-align: center;
-                margin-top: 1em;
-                color: #2c3e50;
-            }
-            .group {
-                background-color: #fff;
-                padding: 1em 1.5em;
-                margin: 1.5em 0;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            h2 {
-                margin-bottom: 0.5em;
-                color: #34495e;
-                border-bottom: 1px solid #ddd;
-                padding-bottom: 0.3em;
-            }
-            ul {
-                list-style: disc;
-                margin-left: 2em;
-            }
-            li a {
-                text-decoration: none;
-                color: #2980b9;
-                transition: color 0.2s ease-in-out;
-            }
-            li a:hover {
-                color: #e74c3c;
-            }
-            .empty {
-                font-style: italic;
-                color: #999;
-            }
-            footer {
-                text-align: center;
-                margin: 2em 0 1em 0;
-                font-size: small;
-                color: #666;
-            }
-            hr {
-                border: 0;
-                border-top: 1px solid #ddd;
-                margin: 2em 0;
-            }
-            ''',
-            '</style>',
-            '</head>',
-            '<body>'
-        ]
-
-        html.append('<h1>Allure Projects Overview</h1>')
-        
-        for group in groups:
-            header = group['header']
-            prefixes = group['prefix']
-            count = group.get('count', 2)
-            html.append(f'<div class="group"><h2>{header}</h2><ul>')
-            versions = extract_versions(projects, prefixes)[:count]
-            if versions:
-                for v in versions:
-                    url = f"{projects[v]['uri']}/reports/latest/index.html"
-                    html.append(f'<li><a href="{url}" target="_blank">{v}</a></li>')
-            else:
-                html.append('<li class="empty">No projects available</li>')
-            html.append('</ul></div>')
-
-        now_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-        html.append(f'<footer><hr>Last generated: {now_utc}</footer>')
-        html.append('</body></html>')
-
-        return '\n'.join(html)
-
-
-    html = build_html(config['groups'], projects)
-    return Response(html, mimetype='text/html')
-#pylint: disable=too-many-lines
-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['JWT_BLACKLIST_ENABLED'] = True
 app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
@@ -1656,6 +1517,142 @@ def get_projects_endpoint():
         resp = jsonify(body)
         resp.status_code = 400
         return resp
+
+# --- Projects Overview Route ---
+@app.route('/allure-docker-service/projects/projects_overview.html', strict_slashes=False)
+def projects_overview_html():
+    config_path = '/app/allure-docker-api/projects_overview_config.json'
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    # Use internal function to get projects data
+    projects_dirs = os.listdir(PROJECTS_DIRECTORY)
+    projects = get_projects(projects_dirs)
+
+    def extract_versions(projects, prefixes):
+        # Support both string and list for backward compatibility
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
+        filtered = [k for k in projects if any(k.startswith(p) for p in prefixes)]
+
+        # Remove temporary projects with a suffix of -<digits> if a base exists
+        base_names = set()
+        temp_pattern = re.compile(r"^(.*)-\d+$")
+        for name in filtered:
+            m = temp_pattern.match(name)
+            if not m:
+                base_names.add(name)
+
+        def is_temp_and_has_base(name):
+            m = temp_pattern.match(name)
+            if m and m.group(1) in base_names:
+                return True
+            return False
+
+        filtered = [name for name in filtered if not is_temp_and_has_base(name)]
+
+        def version_key(name):
+            for p in prefixes:
+                if name.startswith(p):
+                    parts = name[len(p):].split('-')
+                    nums = [int(part) for part in parts if part.isdigit()]
+                    return nums
+            return []
+        filtered.sort(key=version_key, reverse=True)
+        return filtered
+
+    def build_html(groups, projects):
+        html = [
+            '<!DOCTYPE html>',
+            '<html lang="en">',
+            '<head>',
+            '<meta charset="UTF-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            '<title>Allure Projects Overview</title>',
+            '<style>',
+            '''
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0 2em;
+                background-color: #f9f9f9;
+                color: #333;
+            }
+            h1 {
+                text-align: center;
+                margin-top: 1em;
+                color: #2c3e50;
+            }
+            .group {
+                background-color: #fff;
+                padding: 1em 1.5em;
+                margin: 1.5em 0;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            h2 {
+                margin-bottom: 0.5em;
+                color: #34495e;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 0.3em;
+            }
+            ul {
+                list-style: disc;
+                margin-left: 2em;
+            }
+            li a {
+                text-decoration: none;
+                color: #2980b9;
+                transition: color 0.2s ease-in-out;
+            }
+            li a:hover {
+                color: #e74c3c;
+            }
+            .empty {
+                font-style: italic;
+                color: #999;
+            }
+            footer {
+                text-align: center;
+                margin: 2em 0 1em 0;
+                font-size: small;
+                color: #666;
+            }
+            hr {
+                border: 0;
+                border-top: 1px solid #ddd;
+                margin: 2em 0;
+            }
+            ''',
+            '</style>',
+            '</head>',
+            '<body>'
+        ]
+
+        html.append('<h1>Allure Projects Overview</h1>')
+        
+        for group in groups:
+            header = group['header']
+            prefixes = group['prefix']
+            count = group.get('count', 2)
+            html.append(f'<div class="group"><h2>{header}</h2><ul>')
+            versions = extract_versions(projects, prefixes)[:count]
+            if versions:
+                for v in versions:
+                    url = f"{projects[v]['uri']}/reports/latest/index.html"
+                    html.append(f'<li><a href="{url}" target="_blank">{v}</a></li>')
+            else:
+                html.append('<li class="empty">No projects available</li>')
+            html.append('</ul></div>')
+
+        now_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        html.append(f'<footer><hr>Last generated: {now_utc}</footer>')
+        html.append('</body></html>')
+
+        return '\n'.join(html)
+
+
+    html = build_html(config['groups'], projects)
+    return Response(html, mimetype='text/html')
 
 @app.route('/projects/search', strict_slashes=False)
 @app.route("/allure-docker-service/projects/search", strict_slashes=False)
