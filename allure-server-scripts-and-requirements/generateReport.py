@@ -28,7 +28,7 @@ def process_folder(folder_name, project_id, platform):
 
     if os.path.isdir(folder_path):
         logger.info(f"Processing folder: {folder_name}")
-        subprocess.run(['python_path', 'send_results.py', '--results-path', folder_path, '--project-id', project_id], env=os.environ.copy()) # replace with venv python path
+        subprocess.run(['/home/alfonso/DMaas/.venv/bin/python3', 'send_results.py', '--results-path', folder_path, '--project-id', project_id], env=os.environ.copy())
         generate_report(folder_name, project_id)
         clean_results(project_id)
 
@@ -88,6 +88,7 @@ def main():
     parser.add_argument('--lens-version', type=str, help='Specify the lens version')
     parser.add_argument('--project-id', type=str, required=True, help='Specify the project ID')
     parser.add_argument('--platform', type=str, help='Specify the platform (e.g., windows, macos)')
+    parser.add_argument('--folder-name', type=str, help='Specify the exact folder name to process (e.g., DFU-lens-2.3.x-results)')
 
     args = parser.parse_args()
 
@@ -98,25 +99,42 @@ def main():
     elif args.lens_version:
         lens_version = args.lens_version
         
-        # Check for both lens- and lensr- folder patterns
-        lens_folder = f'lens-{lens_version}.x-results'
-        lensr_folder = f'lensr-{lens_version}.x-results'
-        
-        lens_path = os.path.join(remote_test_results_dir, args.platform, lens_folder)
-        lensr_path = os.path.join(remote_test_results_dir, args.platform, lensr_folder)
-        
-        # Determine which folder exists and set the appropriate path and prefix
-        if os.path.exists(lensr_path):
-            remote_test_results_dir_versioned = lensr_path
-            folder_prefix = 'lensr'
-            logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lensr variant)")
-        elif os.path.exists(lens_path):
-            remote_test_results_dir_versioned = lens_path
-            folder_prefix = 'lens'
-            logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lens variant)")
+        # Use provided folder name if available, otherwise fall back to default naming
+        if args.folder_name:
+            target_folder = args.folder_name
+            folder_path = os.path.join(remote_test_results_dir, args.platform, target_folder)
+            
+            if os.path.exists(folder_path):
+                remote_test_results_dir_versioned = folder_path
+                # Determine folder prefix from the actual folder name
+                if 'lensr-' in target_folder:
+                    folder_prefix = 'lensr'
+                else:
+                    folder_prefix = 'lens'
+                logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (using provided folder: {target_folder})")
+            else:
+                logger.error(f"Error: Specified folder {folder_path} does not exist")
+                return
         else:
-            logger.error(f"Error: Neither {lens_path} nor {lensr_path} exists")
-            return
+            # Original logic - check for both lens- and lensr- folder patterns
+            lens_folder = f'lens-{lens_version}.x-results'
+            lensr_folder = f'lensr-{lens_version}.x-results'
+            
+            lens_path = os.path.join(remote_test_results_dir, args.platform, lens_folder)
+            lensr_path = os.path.join(remote_test_results_dir, args.platform, lensr_folder)
+            
+            # Determine which folder exists and set the appropriate path and prefix
+            if os.path.exists(lensr_path):
+                remote_test_results_dir_versioned = lensr_path
+                folder_prefix = 'lensr'
+                logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lensr variant)")
+            elif os.path.exists(lens_path):
+                remote_test_results_dir_versioned = lens_path
+                folder_prefix = 'lens'
+                logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lens variant)")
+            else:
+                logger.error(f"Error: Neither {lens_path} nor {lensr_path} exists")
+                return
         
         # Get all result folders and sort them by build number (last 4 characters)
         folders = sorted(os.listdir(remote_test_results_dir_versioned), key=lambda x: x[-4:])
@@ -144,8 +162,20 @@ def main():
                     elif folder_prefix == 'lensr':
                         env_file.write(f'lens-room-version={folder_name}\n')
                     env_file.write(f'operating-system={args.platform}')
-
-            process_folder(f'{folder_prefix}-{lens_version}.x-results/' + folder_name, new_project_id, args.platform)
+            
+            # # Restore append-only attribute to the new file
+            # try:
+            #     subprocess.run(['chattr', '+a', env_file_path], check=True)
+            # except subprocess.CalledProcessError:
+            #     logger.warning(f"Could not restore append-only attribute to {env_file_path}")
+                
+            # Send test results to Allure server and generate report using the correct folder prefix
+            if args.folder_name:
+                # Use the provided folder name directly
+                process_folder(f'{args.folder_name}/{folder_name}', new_project_id, args.platform)
+            else:
+                # Use the detected folder prefix for backwards compatibility
+                process_folder(f'{folder_prefix}-{lens_version}.x-results/{folder_name}', new_project_id, args.platform)
 
         # Check if the target project already exists in Allure server
         search_endpoint = 'http://localhost:5050/allure-docker-service/projects'
@@ -172,8 +202,8 @@ def main():
                 logger.error(f"Failed to create project. Status code: {response.status_code}, Response: {response.text}")
 
         # Synchronize the new project directory with the existing project directory
-        project_dir = os.path.join('projects_path', args.project_id) # replace with DMaas projects path
-        new_project_dir = os.path.join('projects_path', new_project_id) # replace with DMaas projects path
+        project_dir = os.path.join('/home/alfonso/allure/projects', args.project_id)
+        new_project_dir = os.path.join('/home/alfonso/allure/projects', new_project_id)
 
         for filename in os.listdir(project_dir):
             file_path = os.path.join(project_dir, filename)
