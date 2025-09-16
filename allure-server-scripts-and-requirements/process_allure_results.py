@@ -100,7 +100,7 @@ def main():
                                 project_id = f"{platform_dir.name}-{project_prefix}-v-{dashed_version}-x"
 
                             # Construct command to generate Allure report with proper versioning
-                            command = f"python_venv_path --lens-version {version} --project-id {project_id} --platform {platform_dir.name} --folder-name {folder.name}" # replace with venv python path
+                            command = f"python_venv_path --lens-version {version} --project-id {project_id} --platform {platform_dir.name} --folder-name {folder.name}"
 
                             logger.info(f"Processing folder: {folder.name}")
                             logger.info(f"Running command: {command}")

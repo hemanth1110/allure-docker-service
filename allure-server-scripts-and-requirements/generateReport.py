@@ -156,12 +156,6 @@ def main():
                     elif folder_prefix == 'lensr':
                         env_file.write(f'lens-room-version={folder_name}\n')
                     env_file.write(f'operating-system={args.platform}')
-            
-            # # Restore append-only attribute to the new file
-            # try:
-            #     subprocess.run(['chattr', '+a', env_file_path], check=True)
-            # except subprocess.CalledProcessError:
-            #     logger.warning(f"Could not restore append-only attribute to {env_file_path}")
                 
             # Send test results to Allure server and generate report using the correct folder prefix
             if args.folder_name:
