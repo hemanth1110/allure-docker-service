@@ -28,7 +28,7 @@ def process_folder(folder_name, project_id, platform):
 
     if os.path.isdir(folder_path):
         logger.info(f"Processing folder: {folder_name}")
-        subprocess.run(['python_path', 'send_results.py', '--results-path', folder_path, '--project-id', project_id], env=os.environ.copy()) # replace with venv python path
+        subprocess.run(['project_venv_path', 'send_results.py', '--results-path', folder_path, '--project-id', project_id], env=os.environ.copy()) # replace with venv python path
         generate_report(folder_name, project_id)
         clean_results(project_id)
 
@@ -88,6 +88,7 @@ def main():
     parser.add_argument('--lens-version', type=str, help='Specify the lens version')
     parser.add_argument('--project-id', type=str, required=True, help='Specify the project ID')
     parser.add_argument('--platform', type=str, help='Specify the platform (e.g., windows, macos)')
+    parser.add_argument('--folder-name', type=str, help='Specify the exact folder name to process (e.g., DFU-lens-2.3.x-results)')
 
     args = parser.parse_args()
 
@@ -98,25 +99,36 @@ def main():
     elif args.lens_version:
         lens_version = args.lens_version
         
-        # Check for both lens- and lensr- folder patterns
-        lens_folder = f'lens-{lens_version}.x-results'
-        lensr_folder = f'lensr-{lens_version}.x-results'
-        
-        lens_path = os.path.join(remote_test_results_dir, args.platform, lens_folder)
-        lensr_path = os.path.join(remote_test_results_dir, args.platform, lensr_folder)
-        
-        # Determine which folder exists and set the appropriate path and prefix
-        if os.path.exists(lensr_path):
-            remote_test_results_dir_versioned = lensr_path
-            folder_prefix = 'lensr'
-            logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lensr variant)")
-        elif os.path.exists(lens_path):
-            remote_test_results_dir_versioned = lens_path
-            folder_prefix = 'lens'
-            logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} (lens variant)")
+        # Determine target folder and prefix
+        if args.folder_name:
+            target_folder = args.folder_name
+            folder_prefix = 'lensr' if 'lensr-' in target_folder else 'lens'
         else:
-            logger.error(f"Error: Neither {lens_path} nor {lensr_path} exists")
+            # Check for both lens- and lensr- folder patterns
+            lens_folder = f'lens-{lens_version}.x-results'
+            lensr_folder = f'lensr-{lens_version}.x-results'
+            
+            lens_path = os.path.join(remote_test_results_dir, args.platform, lens_folder)
+            lensr_path = os.path.join(remote_test_results_dir, args.platform, lensr_folder)
+            
+            if os.path.exists(lensr_path):
+                target_folder = lensr_folder
+                folder_prefix = 'lensr'
+            elif os.path.exists(lens_path):
+                target_folder = lens_folder
+                folder_prefix = 'lens'
+            else:
+                logger.error(f"Error: Neither {lens_path} nor {lensr_path} exists")
+                return
+        
+        # Set the versioned directory path and validate
+        remote_test_results_dir_versioned = os.path.join(remote_test_results_dir, args.platform, target_folder)
+        
+        if not os.path.exists(remote_test_results_dir_versioned):
+            logger.error(f"Error: Specified folder {remote_test_results_dir_versioned} does not exist")
             return
+            
+        logger.info(f"Looking for test results in: {remote_test_results_dir_versioned} ({folder_prefix} variant)")
         
         # Get all result folders and sort them by build number (last 4 characters)
         folders = sorted(os.listdir(remote_test_results_dir_versioned), key=lambda x: x[-4:])
@@ -144,8 +156,14 @@ def main():
                     elif folder_prefix == 'lensr':
                         env_file.write(f'lens-room-version={folder_name}\n')
                     env_file.write(f'operating-system={args.platform}')
-
-            process_folder(f'{folder_prefix}-{lens_version}.x-results/' + folder_name, new_project_id, args.platform)
+                
+            # Send test results to Allure server and generate report using the correct folder prefix
+            if args.folder_name:
+                # Use the provided folder name directly
+                process_folder(f'{args.folder_name}/{folder_name}', new_project_id, args.platform)
+            else:
+                # Use the detected folder prefix for backwards compatibility
+                process_folder(f'{folder_prefix}-{lens_version}.x-results/{folder_name}', new_project_id, args.platform)
 
         # Check if the target project already exists in Allure server
         search_endpoint = 'http://localhost:5050/allure-docker-service/projects'

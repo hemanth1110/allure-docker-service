@@ -1930,8 +1930,9 @@ def check_process(process_file, project_id):
 
 def generate_file_path(project_id, build_id, file_type, lens_desktop_version=None):
     """Generate file path for notes or jira tickets"""
-    # Check if project ID matches the specific format: windows/macos-ld/lr-v-digit-digit-x
-    format_pattern = re.compile(r'^(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
+    # Check if project ID matches the specific format with optional prefix: [prefix-]windows/macos-ld/lr-v-digit-digit-x
+    # Prefix can only contain letters (a-z, A-Z) followed by a dash
+    format_pattern = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
     
     if not format_pattern.match(project_id):
         # Standard Allure structure for non-custom projects
@@ -1943,11 +1944,27 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     LOGGER.info('PATH GENERATION - Using custom DMaas path for project: %s, lens_desktop_version: %s', project_id, lens_desktop_version)
     
     # Parse project_id to extract platform and version info
-    # Format: {platform}-{product}-v-{major}-{minor}-x
+    # Format: [prefix-]{platform}-{product}-v-{major}-{minor}-x where prefix is optional and can only contain letters (a-z, A-Z)
+    
+    # Check if project has a prefix by looking for pattern: prefix-platform-product-v-major-minor-x
+    prefix = None
+    core_project_id = project_id
+    
+    # Split by dash and check if we have more than 6 parts (indicating a prefix)
     project_parts = project_id.split('-')
+    if len(project_parts) > 6:
+        # Extract prefix (everything before the platform-product-v-major-minor-x pattern)
+        # Find the start of the core pattern by looking for platform (windows/macos)
+        for i, part in enumerate(project_parts):
+            if part in ['windows', 'macos'] and i > 0:
+                prefix = '-'.join(project_parts[:i])
+                core_project_id = '-'.join(project_parts[i:])
+                break
+    
+    project_parts = core_project_id.split('-')
 
     if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr'] or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr']}, got: {project_id}")
+        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr']}, got: {project_id}")
 
     platform = project_parts[0]  # windows or macos
     product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
@@ -1976,9 +1993,15 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     # Generate file name
     file_name = 'notes.json' if file_type == 'notes' else 'jira.json'
     
+    # Build the directory path with prefix if present
+    if prefix:
+        directory_name = f"{prefix}-{product_name}-{major_minor}.x-results"
+    else:
+        directory_name = f"{product_name}-{major_minor}.x-results"
+    
     # Return complete DMaas path using the same structure as generate_results_path
-    # /app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{full_version}/{file_name}
-    return f"/app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{full_version}/{file_name}"
+    # /app/DMaas/allure-results/{platform}/{[prefix-]product_name}-{major_minor}.x-results/{full_version}/{file_name}
+    return f"/app/DMaas/allure-results/{platform}/{directory_name}/{full_version}/{file_name}"
 
 def get_notes_file_path(project_id, build_id, lens_desktop_version=None):
     """Get file path for notes"""

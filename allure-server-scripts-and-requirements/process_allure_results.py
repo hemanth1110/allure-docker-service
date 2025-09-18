@@ -55,8 +55,8 @@ def main():
             logger.error(f"Error: {allure_results_path} does not exist or is not a directory")
             return
 
-        # Regular expression to extract version from folder names like 'lens-2.1.x-results'
-        pattern = re.compile(r'lensr?-(\d+\.\d+)\.x-results')
+        # Regular expression to extract testType and version from folder names like 'lens-2.1.x-results' or 'dfu-lens-2.1.x-results'
+        pattern = re.compile(r'(?:(\w+)-)?lensr?-(\d+\.\d+)\.x-results')
         
         for platform_dir in allure_results_path.iterdir():
             # Process only platform-specific directories (macos, windows)
@@ -80,18 +80,27 @@ def main():
                                 logger.info(f"No changes detected in {folder.name}, skipping...")
                                 continue
 
-                            # Extract version number (e.g., 2.1 from lens-2.1.x-results)
-                            version = match.group(1)
+                            # Extract testType (if exists) and version from the regex groups
+                            test_type = match.group(1)  # Optional testType prefix
+                            version = match.group(2)    # Version number (e.g., 2.1)
+                            
                             # Convert dots to dashes for project ID naming convention followed by allure docker service
                             dashed_version = version.replace('.', '-')
 
-                            if folder.name.startswith('lensr-'):
+                            # Determine project prefix based on folder name
+                            if 'lensr-' in folder.name:
                                 project_prefix = "lr"
                             else:
                                 project_prefix = "ld"
 
+                            # Construct project ID with testType prefix if it exists
+                            if test_type:
+                                project_id = f"{test_type}-{platform_dir.name}-{project_prefix}-v-{dashed_version}-x"
+                            else:
+                                project_id = f"{platform_dir.name}-{project_prefix}-v-{dashed_version}-x"
+
                             # Construct command to generate Allure report with proper versioning
-                            command = f"python_path generateReport.py --lens-version {version} --project-id {platform_dir.name}-{project_prefix}-v-{dashed_version}-x --platform {platform_dir.name}" # replace with venv python path
+                            command = f"python_venv_path --lens-version {version} --project-id {project_id} --platform {platform_dir.name} --folder-name {folder.name}"
 
                             logger.info(f"Processing folder: {folder.name}")
                             logger.info(f"Running command: {command}")
