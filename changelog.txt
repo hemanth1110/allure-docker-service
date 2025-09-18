@@ -1,5 +1,9 @@
+1.2.1 (2025-09-18)
+  - [GTSS-4872]
+    - Fixed regex compilation to occur during app initialization, rather than compiling each time an endpoint is called.
+
 1.2.0 (2025-09-14)
-  -[GTSS-4850]
+  - [GTSS-4850]
     - Allow notes and jira tickets functionality for test specific projects. 
 
 1.1.0 (2025-09-09)
