@@ -21,7 +21,7 @@ from werkzeug.utils import secure_filename
 
 PROJECT_ID_PATTERN = re.compile(r'^[a-z\d]([a-z\d -]*[a-z\d])?$')
 BUILD_ORDER_PATTERN = re.compile(r'^[0-9\d .]*[0-9\d]$')
-FORMAT_PATTERN = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
+TEST_SPECIFIC_PROJECT_PATTERN = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
 TEMP_PROJECT_PATTERN = re.compile(r"^(.*)-\d+$")
 
 from flask import (
@@ -1936,7 +1936,7 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     # Check if project ID matches the specific format with optional prefix: [prefix-]windows/macos-ld/lr-v-digit-digit-x
     # Prefix can only contain letters (a-z, A-Z) followed by a dash
     
-    if not FORMAT_PATTERN.match(project_id):
+    if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
         # Standard Allure structure for non-custom projects
         LOGGER.info('PATH GENERATION - Using standard Allure path for project: %s', project_id)
         file_name = 'notes.json' if file_type == 'notes' else 'jira.json'
