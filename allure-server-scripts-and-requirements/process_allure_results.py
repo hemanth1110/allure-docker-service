@@ -55,8 +55,8 @@ def main():
             logger.error(f"Error: {allure_results_path} does not exist or is not a directory")
             return
 
-        # Regular expression to extract testType and version from folder names like 'lens-2.1.x-results' or 'dfu-lens-2.1.x-results'
-        pattern = re.compile(r'(?:(\w+)-)?lensr?-(\d+\.\d+)\.x-results')
+        # Regular expression to extract testType and version from folder names like 'lens-2.1.x-results', 'lensr-2.1.x-results', 'lensps-2.1.x-results' or 'dfu-lens-2.1.x-results'
+        pattern = re.compile(r'(?:(\w+)-)?(?:lens(?:r|ps)?)-(\d+\.\d+)\.x-results')
         
         for platform_dir in allure_results_path.iterdir():
             # Process only platform-specific directories (macos, windows)
@@ -90,6 +90,8 @@ def main():
                             # Determine project prefix based on folder name
                             if 'lensr-' in folder.name:
                                 project_prefix = "lr"
+                            elif 'lensps-' in folder.name:
+                                project_prefix = "ps"
                             else:
                                 project_prefix = "ld"
 
