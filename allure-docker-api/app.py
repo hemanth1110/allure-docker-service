@@ -1857,8 +1857,8 @@ def generate_results_path(lens_version, project_id):
     # Format: {platform}-{product}-v-{major}-{minor}-x
     project_parts = project_id.split('-')
 
-    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr'] or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr']}, got: {project_id}")
+    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr','ps'] or project_parts[2] != 'v' or project_parts[5] != 'x':
+        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr','ps']}, got: {project_id}")
 
     platform = project_parts[0]  # windows or macos
     product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
@@ -1867,7 +1867,8 @@ def generate_results_path(lens_version, project_id):
 
     product_mapping = {
         'ld': 'lens',
-        'lr': 'lensr'
+        'lr': 'lensr',
+        'ps': 'lensps'
     }
 
     product_name = product_mapping[product_code]
@@ -1932,7 +1933,7 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     """Generate file path for notes or jira tickets"""
     # Check if project ID matches the specific format with optional prefix: [prefix-]windows/macos-ld/lr-v-digit-digit-x
     # Prefix can only contain letters (a-z, A-Z) followed by a dash
-    format_pattern = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
+    format_pattern = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr|ps)-v-\d+-\d+-x$')
     
     if not format_pattern.match(project_id):
         # Standard Allure structure for non-custom projects
@@ -1963,23 +1964,24 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     
     project_parts = core_project_id.split('-')
 
-    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr'] or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr']}, got: {project_id}")
+    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr', 'ps'] or project_parts[2] != 'v' or project_parts[5] != 'x':
+        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
 
     platform = project_parts[0]  # windows or macos
-    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
+    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room) or ps (poly studio)
     major = project_parts[3]
     minor = project_parts[4]
 
     product_mapping = {
         'ld': 'lens',
-        'lr': 'lensr'
+        'lr': 'lensr',
+        'ps': 'lensps'
     }
 
     product_name = product_mapping[product_code]
     major_minor = f"{major}.{minor}"
     
-    # Build full version path based on product type (following Express API logic)
+    # Build full version path based on product type
     if product_code == 'ld':  # lens desktop
         # For lens desktop: use lensDesktopVersion if provided, otherwise major.minor.0.build_id
         if lens_desktop_version:
@@ -1988,6 +1990,9 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
             full_version = f"{major}.{minor}.0.{build_id}"
     elif product_code == 'lr':  # lens room
         # For lens room: major.minor.build_id (e.g., 1.15.1234)
+        full_version = f"{major}.{minor}.{build_id}"
+    elif product_code == 'ps':  # poly studio
+        # For poly studio: major.minor.build_id (e.g., 0.1.1234)
         full_version = f"{major}.{minor}.{build_id}"
     
     # Generate file name

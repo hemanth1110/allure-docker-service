@@ -102,23 +102,33 @@ def main():
         # Determine target folder and prefix
         if args.folder_name:
             target_folder = args.folder_name
-            folder_prefix = 'lensr' if 'lensr-' in target_folder else 'lens'
+            if 'lensr-' in target_folder:
+                folder_prefix = 'lensr'
+            elif 'lensps-' in target_folder:
+                folder_prefix = 'lensps'
+            else:
+                folder_prefix = 'lens'
         else:
-            # Check for both lens- and lensr- folder patterns
+            # Check for lens-, lensr-, and ps- folder patterns
             lens_folder = f'lens-{lens_version}.x-results'
             lensr_folder = f'lensr-{lens_version}.x-results'
+            lensps_folder = f'lensps-{lens_version}.x-results'
             
             lens_path = os.path.join(remote_test_results_dir, args.platform, lens_folder)
             lensr_path = os.path.join(remote_test_results_dir, args.platform, lensr_folder)
-            
+            lensps_path = os.path.join(remote_test_results_dir, args.platform, lensps_folder)
+
             if os.path.exists(lensr_path):
                 target_folder = lensr_folder
                 folder_prefix = 'lensr'
+            elif os.path.exists(lensps_path):
+                target_folder = lensps_folder
+                folder_prefix = 'lensps'
             elif os.path.exists(lens_path):
                 target_folder = lens_folder
                 folder_prefix = 'lens'
             else:
-                logger.error(f"Error: Neither {lens_path} nor {lensr_path} exists")
+                logger.error(f"Error: None of {lens_path}, {lensr_path}, or {lensps_path} exists")
                 return
         
         # Set the versioned directory path and validate
@@ -155,8 +165,9 @@ def main():
                         env_file.write(f'lens-desktop-version={folder_name}\n')
                     elif folder_prefix == 'lensr':
                         env_file.write(f'lens-room-version={folder_name}\n')
+                    elif folder_prefix == 'lensps':
+                        env_file.write(f'poly-studio-version={folder_name}\n')
                     env_file.write(f'operating-system={args.platform}')
-                
             # Send test results to Allure server and generate report using the correct folder prefix
             if args.folder_name:
                 # Use the provided folder name directly
