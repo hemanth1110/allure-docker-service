@@ -1856,16 +1856,38 @@ def generate_results_path(lens_version, project_id):
     - windows-ld-v-2-4-x (lens desktop)
     - macos-ld-v-2-2-x (lens desktop)
     - windows-lr-v-1-14-x (lens room)
+    - windows-ps-v-0-1-x (poly studio)
+    - prefix-windows-ld-v-2-4-x (with custom prefix)
     """
+    # Check if project ID matches the test-specific format with optional prefix
+    if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
+        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
+    
     # Parse project_id to extract platform and version info
-    # Format: {platform}-{product}-v-{major}-{minor}-x
+    # Format: [prefix-]{platform}-{product}-v-{major}-{minor}-x where prefix is optional and can only contain letters (a-z, A-Z)
+    
+    # Check if project has a prefix by looking for pattern: prefix-platform-product-v-major-minor-x
+    prefix = None
+    core_project_id = project_id
+    
+    # Split by dash and check if we have more than 6 parts (indicating a prefix)
     project_parts = project_id.split('-')
+    if len(project_parts) > 6:
+        # Extract prefix (everything before the platform-product-v-major-minor-x pattern)
+        # Find the start of the core pattern by looking for platform (windows/macos)
+        for i, part in enumerate(project_parts):
+            if part in ['windows', 'macos'] and i > 0:
+                prefix = '-'.join(project_parts[:i])
+                core_project_id = '-'.join(project_parts[i:])
+                break
+    
+    project_parts = core_project_id.split('-')
 
-    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr','ps'] or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr','ps']}, got: {project_id}")
+    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr', 'ps'] or project_parts[2] != 'v' or project_parts[5] != 'x':
+        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
 
     platform = project_parts[0]  # windows or macos
-    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room)
+    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room) or ps (poly studio)
     major = project_parts[3]
     minor = project_parts[4]
 
@@ -1877,8 +1899,14 @@ def generate_results_path(lens_version, project_id):
 
     product_name = product_mapping[product_code]
     major_minor = f"{major}.{minor}"
+    
+    # Build the directory path with prefix if present
+    if prefix:
+        directory_name = f"{prefix}-{product_name}-{major_minor}.x-results"
+    else:
+        directory_name = f"{product_name}-{major_minor}.x-results"
 
-    custom_path = f"/app/DMaas/allure-results/{platform}/{product_name}-{major_minor}.x-results/{lens_version}"
+    custom_path = f"/app/DMaas/allure-results/{platform}/{directory_name}/{lens_version}"
     return custom_path
 
 def resolve_project(project_id_param):
