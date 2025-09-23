@@ -2,12 +2,12 @@
   "groups": [
     {
       "header": "Poly Studio Windows",
-      "prefix": "windows-ps-v-",
+      "prefix": "windows-ps-v-0-",
       "count": 3
     },
     {
       "header": "Poly Studio Mac",
-      "prefix": "macos-ps-v-",
+      "prefix": "macos-ps-v-0-",
       "count": 3
     },
     {
