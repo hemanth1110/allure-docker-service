@@ -1857,7 +1857,7 @@ def generate_results_path(lens_version, project_id):
     - macos-ld-v-2-2-x (lens desktop)
     - windows-lr-v-1-14-x (lens room)
     - windows-ps-v-0-1-x (poly studio)
-    - prefix-windows-ld-v-2-4-x (with custom prefix)
+    - prefix-windows-ld-v-2-4-x (with custom prefix where it can be a testtype (ex: dfu, dfuub, edfu, ...))
     """
     # Check if project ID matches the test-specific format with optional prefix
     if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
