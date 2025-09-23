@@ -18,6 +18,12 @@ import waitress
 from filelock import FileLock
 
 from werkzeug.utils import secure_filename
+
+PROJECT_ID_PATTERN = re.compile(r'^[a-z\d]([a-z\d -]*[a-z\d])?$')
+BUILD_ORDER_PATTERN = re.compile(r'^[0-9\d .]*[0-9\d]$')
+TEST_SPECIFIC_PROJECT_PATTERN = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
+TEMP_PROJECT_PATTERN = re.compile(r"^(.*)-\d+$")
+
 from flask import (
     Flask, jsonify, render_template, redirect,
     request, send_file, send_from_directory, make_response, url_for
@@ -1536,14 +1542,13 @@ def projects_overview_html():
 
         # Remove temporary projects with a suffix of -<digits> if a base exists
         base_names = set()
-        temp_pattern = re.compile(r"^(.*)-\d+$")
         for name in filtered:
-            m = temp_pattern.match(name)
+            m = TEMP_PROJECT_PATTERN.match(name)
             if not m:
                 base_names.add(name)
 
         def is_temp_and_has_base(name):
-            m = temp_pattern.match(name)
+            m = TEMP_PROJECT_PATTERN.match(name)
             if m and m.group(1) in base_names:
                 return True
             return False
@@ -1792,8 +1797,7 @@ def create_project(json_body):
     if len(json_body['id']) > 100:
         raise Exception("'id' should not contains more than 100 characters.")
 
-    project_id_pattern = re.compile('^[a-z\\d]([a-z\\d -]*[a-z\\d])?$')
-    match = project_id_pattern.match(json_body['id'])
+    match = PROJECT_ID_PATTERN.match(json_body['id'])
     if  match is None:
         raise Exception("'id' should contains alphanumeric lowercase characters or hyphens. For example: 'my-project-id'") #pylint: disable=line-too-long
 
@@ -1898,8 +1902,7 @@ def is_valid_build_order(project_id, build_order):
     if is_existent_build_order(project_id, build_order) is True:
         raise Exception("custom_build_order '{}' exist".format(build_order))
 
-    build_order_pattern = re.compile('^[0-9\\d .]*[0-9\\d]$')
-    match = build_order_pattern.match(build_order)
+    match = BUILD_ORDER_PATTERN.match(build_order)
     if  match is None:
         raise Exception("custom_build_order should contains numeric characters or dots. For example: '1.0.0'") #pylint: disable=line-too-long
     return build_order
@@ -1932,9 +1935,8 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     """Generate file path for notes or jira tickets"""
     # Check if project ID matches the specific format with optional prefix: [prefix-]windows/macos-ld/lr-v-digit-digit-x
     # Prefix can only contain letters (a-z, A-Z) followed by a dash
-    format_pattern = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr)-v-\d+-\d+-x$')
     
-    if not format_pattern.match(project_id):
+    if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
         # Standard Allure structure for non-custom projects
         LOGGER.info('PATH GENERATION - Using standard Allure path for project: %s', project_id)
         file_name = 'notes.json' if file_type == 'notes' else 'jira.json'
