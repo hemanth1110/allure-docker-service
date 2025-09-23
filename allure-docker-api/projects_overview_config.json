@@ -11,6 +11,16 @@
       "count": 3
     },
     {
+      "header": "Poly Studio Windows",
+      "prefix": "windows-ps-v-",
+      "count": 3
+    },
+    {
+      "header": "Poly Studio Mac",
+      "prefix": "macos-ps-v-",
+      "count": 3
+    },
+    {
       "header": "Lens Room",
       "prefix": "windows-lr-v-1-",
       "count": 3
