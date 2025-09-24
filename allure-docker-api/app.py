@@ -2026,8 +2026,10 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
         # For lens room: major.minor.build_id (e.g., 1.15.1234)
         full_version = f"{major}.{minor}.{build_id}"
     elif product_code == 'ps':  # poly studio
-        # For poly studio: major.minor.0.build_id
-        full_version = f"{major}.{minor}.0.{build_id}"
+        if lens_desktop_version:
+            full_version = lens_desktop_version
+        else:
+            full_version = f"{major}.{minor}.0.{build_id}"
     
     # Generate file name
     file_name = 'notes.json' if file_type == 'notes' else 'jira.json'
