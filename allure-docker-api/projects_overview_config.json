@@ -1,13 +1,13 @@
 {
   "groups": [
     {
-      "header": "Lens Desktop Windows",
-      "prefix": "windows-ld-v-2-",
+      "header": "Poly Studio Windows",
+      "prefix": "windows-ps-v-",
       "count": 3
     },
     {
-      "header": "Lens Desktop Mac",
-      "prefix": "macos-ld-v-2-",
+      "header": "Poly Studio Mac",
+      "prefix": "macos-ps-v-",
       "count": 3
     },
     {
@@ -31,6 +31,16 @@
         "ios",
         "android"
       ],
+      "count": 3
+    },
+    {
+      "header": "Lens Desktop Windows",
+      "prefix": "windows-ld-v-2-",
+      "count": 3
+    },
+    {
+      "header": "Lens Desktop Mac",
+      "prefix": "macos-ld-v-2-",
       "count": 3
     }
   ]
