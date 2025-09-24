@@ -21,7 +21,7 @@ from werkzeug.utils import secure_filename
 
 PROJECT_ID_PATTERN = re.compile(r'^[a-z\d]([a-z\d -]*[a-z\d])?$')
 BUILD_ORDER_PATTERN = re.compile(r'^[0-9\d .]*[0-9\d]$')
-TEST_SPECIFIC_PROJECT_PATTERN = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr|ps)-v-\d+-\d+-x$')
+PROJECT_PATTERN = re.compile(r'^(?:[a-zA-Z]+-)?(windows|macos)-(ld|lr|ps)-v-\d+-\d+-x$')
 TEMP_PROJECT_PATTERN = re.compile(r"^(.*)-\d+$")
 
 from flask import (
@@ -1847,39 +1847,33 @@ def get_projects_filtered_by_id(project_id, projects):
 def get_project_path(project_id):
     return '{}/{}'.format(PROJECTS_DIRECTORY, project_id)
 
-def generate_results_path(lens_version, project_id):
+def parse_project_id(project_id):
     """
-    Generate appropriate path format for custom results directory.
-    Example: /app/DMaas/allure-results/windows/lens-2.3.x-results/2.3.0.1234
+    Parse project ID and extract components with optional prefix (testType) support.
     
-    project_id formats:
-    - windows-ld-v-2-4-x (lens desktop)
-    - macos-ld-v-2-2-x (lens desktop)
-    - windows-lr-v-1-14-x (lens room)
-    - windows-ps-v-0-1-x (poly studio)
-    - prefix-windows-ld-v-2-4-x (with custom prefix where it can be a testtype (ex: dfu, dfuub, edfu, ...))
+    Args:
+        project_id: Project ID in format [prefix-]platform-product-v-major-minor-x
+        
+    Returns:
+        dict: Dictionary containing parsed components:
+            - prefix: Optional prefix (None if no prefix)
+            - platform: 'windows' or 'macos'
+            - product_code: 'ld', 'lr', or 'ps'
+            - major: Major version number
+            - minor: Minor version number
+            - product_name: Mapped product name ('lens', 'lensr', 'lensps')
+            - major_minor: Formatted as 'major.minor'
     """
-    # Check if project ID matches the test-specific format with optional prefix
-    if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
-        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
-    
-    # Parse project_id to extract platform and version info
-    # Format: [prefix-]{platform}-{product}-v-{major}-{minor}-x where prefix is optional and can only contain letters (a-z, A-Z)
-    
-    # Check if project has a prefix by looking for pattern: prefix-platform-product-v-major-minor-x
+    # Check if project has a prefix by looking at the start of project_id
     prefix = None
     core_project_id = project_id
-    
-    # Split by dash and check if we have more than 6 parts (indicating a prefix)
-    project_parts = project_id.split('-')
-    if len(project_parts) > 6:
-        # Extract prefix (everything before the platform-product-v-major-minor-x pattern)
-        # Find the start of the core pattern by looking for platform (windows/macos)
-        for i, part in enumerate(project_parts):
-            if part in ['windows', 'macos'] and i > 0:
-                prefix = '-'.join(project_parts[:i])
-                core_project_id = '-'.join(project_parts[i:])
-                break
+
+    if not (project_id.startswith('windows') or project_id.startswith('macos')):
+        # Extract prefix
+        first_dash_index = project_id.find('-')
+        if first_dash_index != -1:
+            prefix = project_id[:first_dash_index]
+            core_project_id = project_id[first_dash_index + 1:]
     
     project_parts = core_project_id.split('-')
 
@@ -1899,6 +1893,41 @@ def generate_results_path(lens_version, project_id):
 
     product_name = product_mapping[product_code]
     major_minor = f"{major}.{minor}"
+    
+    return {
+        'prefix': prefix,
+        'platform': platform,
+        'product_code': product_code,
+        'major': major,
+        'minor': minor,
+        'product_name': product_name,
+        'major_minor': major_minor
+    }
+
+def generate_results_path(lens_version, project_id):
+    """
+    Generate appropriate path format for custom results directory.
+    Example: /app/DMaas/allure-results/windows/lens-2.3.x-results/2.3.0.1234
+    
+    project_id formats:
+    - windows-ld-v-2-4-x (lens desktop)
+    - macos-ld-v-2-2-x (lens desktop)
+    - windows-lr-v-1-14-x (lens room)
+    - windows-ps-v-0-1-x (poly studio)
+    - prefix-windows-ld-v-2-4-x (with custom prefix where it can be a testtype (ex: dfu, dfuub, edfu, ...))
+    """
+    # Check if project ID matches the test-specific format with optional prefix
+    if not PROJECT_PATTERN.match(project_id):
+        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
+    
+    # Parse project_id to extract platform and version info
+    # Format: [prefix-]{platform}-{product}-v-{major}-{minor}-x where prefix is optional and can only contain letters (a-z, A-Z)
+    
+    parsed = parse_project_id(project_id)
+    prefix = parsed['prefix']
+    platform = parsed['platform']
+    product_name = parsed['product_name']
+    major_minor = parsed['major_minor']
     
     # Build the directory path with prefix if present
     if prefix:
@@ -1965,7 +1994,7 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     # Check if project ID matches the specific format with optional prefix: [prefix-]windows/macos-ld/lr-v-digit-digit-x
     # Prefix can only contain letters (a-z, A-Z) followed by a dash
     
-    if not TEST_SPECIFIC_PROJECT_PATTERN.match(project_id):
+    if not PROJECT_PATTERN.match(project_id):
         # Standard Allure structure for non-custom projects
         LOGGER.info('PATH GENERATION - Using standard Allure path for project: %s', project_id)
         file_name = 'notes.json' if file_type == 'notes' else 'jira.json'
@@ -1977,39 +2006,14 @@ def generate_file_path(project_id, build_id, file_type, lens_desktop_version=Non
     # Parse project_id to extract platform and version info
     # Format: [prefix-]{platform}-{product}-v-{major}-{minor}-x where prefix is optional and can only contain letters (a-z, A-Z)
     
-    # Check if project has a prefix by looking for pattern: prefix-platform-product-v-major-minor-x
-    prefix = None
-    core_project_id = project_id
-    
-    # Split by dash and check if we have more than 6 parts (indicating a prefix)
-    project_parts = project_id.split('-')
-    if len(project_parts) > 6:
-        # Extract prefix (everything before the platform-product-v-major-minor-x pattern)
-        # Find the start of the core pattern by looking for platform (windows/macos)
-        for i, part in enumerate(project_parts):
-            if part in ['windows', 'macos'] and i > 0:
-                prefix = '-'.join(project_parts[:i])
-                core_project_id = '-'.join(project_parts[i:])
-                break
-    
-    project_parts = core_project_id.split('-')
-
-    if len(project_parts) < 6 or project_parts[0] not in ['windows', 'macos'] or project_parts[1] not in ['ld', 'lr', 'ps'] or project_parts[2] != 'v' or project_parts[5] != 'x':
-        raise Exception(f"Invalid project_id format. Expected format: [prefix-]platform-product-v-major-minor-x, where platform is one of {['windows', 'macos']} and product is one of {['ld', 'lr', 'ps']}, got: {project_id}")
-
-    platform = project_parts[0]  # windows or macos
-    product_code = project_parts[1]  # ld (lens desktop) or lr (lens room) or ps (poly studio)
-    major = project_parts[3]
-    minor = project_parts[4]
-
-    product_mapping = {
-        'ld': 'lens',
-        'lr': 'lensr',
-        'ps': 'lensps'
-    }
-
-    product_name = product_mapping[product_code]
-    major_minor = f"{major}.{minor}"
+    parsed = parse_project_id(project_id)
+    prefix = parsed['prefix']
+    platform = parsed['platform']
+    product_code = parsed['product_code']
+    major = parsed['major']
+    minor = parsed['minor']
+    product_name = parsed['product_name']
+    major_minor = parsed['major_minor']
     
     # Build full version path based on product type
     if product_code == 'ld':  # lens desktop
